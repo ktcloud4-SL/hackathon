@@ -23,7 +23,7 @@ from app.schemas.domain import (
     SupportRequest,
     SupportResponse,
 )
-from app.schemas.event import TimelineEventView
+from app.schemas.event import TimelineEventList
 from app.services.incident_access import IncidentAccessChecker
 from app.services.incidents import IncidentService
 
@@ -61,15 +61,16 @@ async def get_incident(
     return await service.get_detail(incident_id)
 
 
-@router.get("/{incidentId}/timeline", response_model=list[TimelineEventView])
+@router.get("/{incidentId}/timeline", response_model=TimelineEventList)
 async def get_timeline(
     incident_id: Annotated[int, Path(alias="incidentId", gt=0)],
     current_user: CurrentUser,
     service: Annotated[IncidentService, Depends(get_incident_service)],
     checker: Annotated[IncidentAccessChecker, Depends(get_incident_access_checker)],
-) -> list[TimelineEventView]:
+) -> TimelineEventList:
     await _require_view(checker, current_user, incident_id)
-    return (await service.get_detail(incident_id)).timeline
+    items = (await service.get_detail(incident_id)).timeline
+    return TimelineEventList(items=items, total=len(items))
 
 
 @router.patch("/{incidentId}/agencies/{agencyType}/status", response_model=IncidentDetail)

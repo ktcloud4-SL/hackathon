@@ -136,6 +136,27 @@ GET /incidents/{incidentId}/timeline
 
 Incident 상세 응답에는 신고, Category, Severity, 참여 기관 상태, Timeline을 포함합니다.
 
+`GET /incidents/{incidentId}/timeline`은 공통 목록 형식을 사용합니다.
+
+```json
+{
+  "items": [
+    {
+      "id": 15,
+      "type": "AGENCY_STATUS_CHANGED",
+      "message": "소방 대응 상태가 DISPATCHED(으)로 변경되었습니다.",
+      "occurredAt": "2026-08-20T17:04:00+09:00",
+      "metadata": {
+        "agencyType": "FIRE",
+        "previousStatus": "RECEIVED",
+        "status": "DISPATCHED"
+      }
+    }
+  ],
+  "total": 1
+}
+```
+
 접근 범위:
 
 - 시민: 자신이 신고한 Incident
