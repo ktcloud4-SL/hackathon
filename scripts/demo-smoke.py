@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import sys
@@ -30,6 +31,22 @@ class SmokeConfig:
     include_optional: bool = True
 
 
+@dataclass(frozen=True)
+class MultipartFile:
+    field_name: str
+    filename: str
+    content_type: str
+    content: bytes
+
+
+SMOKE_DESCRIPTION = (
+    "차량이 전봇대를 들이받았고 사람이 다쳤으며 전선에서 불꽃이 납니다."
+)
+SMOKE_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB99Y9ZQAAAABJRU5ErkJggg=="
+)
+
+
 class ApiClient:
     def __init__(self, base_url: str, timeout: float) -> None:
         normalized = base_url.rstrip("/")
@@ -46,15 +63,19 @@ class ApiClient:
         *,
         json_body: dict[str, Any] | None = None,
         form_fields: list[tuple[str, str]] | None = None,
+        form_files: list[MultipartFile] | None = None,
         expected_status: int = 200,
     ) -> Any:
-        headers = {"Accept": "application/json", "User-Agent": "OneReport-Demo-Smoke/1.0"}
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "OneReport-Demo-Smoke/1.0",
+        }
         body: bytes | None = None
         if json_body is not None:
             body = json.dumps(json_body).encode("utf-8")
             headers["Content-Type"] = "application/json"
-        elif form_fields is not None:
-            body, content_type = _multipart_body(form_fields)
+        elif form_fields is not None or form_files is not None:
+            body, content_type = _multipart_body(form_fields or [], form_files or [])
             headers["Content-Type"] = content_type
 
         request = Request(
@@ -82,8 +103,35 @@ class ApiClient:
         except json.JSONDecodeError as exc:
             raise SmokeFailure(f"{method} {path}: response is not valid JSON") from exc
 
+    def get_bytes(self, url: str, *, label: str) -> tuple[bytes, str]:
+        request = Request(
+            url,
+            headers={
+                "Accept": "image/*",
+                "User-Agent": "OneReport-Demo-Smoke/1.0",
+            },
+            method="GET",
+        )
+        try:
+            with self.opener.open(request, timeout=self.timeout) as response:
+                payload = response.read()
+                if response.status != 200:
+                    raise SmokeFailure(
+                        f"{label}: expected HTTP 200, got {response.status}"
+                    )
+                return payload, response.headers.get("Content-Type", "")
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            raise SmokeFailure(
+                f"{label}: HTTP {exc.code}; response={detail or '<empty>'}"
+            ) from exc
+        except URLError as exc:
+            raise SmokeFailure(f"{label}: connection failed: {exc.reason}") from exc
 
-def _multipart_body(fields: list[tuple[str, str]]) -> tuple[bytes, str]:
+
+def _multipart_body(
+    fields: list[tuple[str, str]], files: list[MultipartFile]
+) -> tuple[bytes, str]:
     boundary = f"----OneReportSmoke{uuid.uuid4().hex}"
     chunks: list[bytes] = []
     for name, value in fields:
@@ -92,6 +140,19 @@ def _multipart_body(fields: list[tuple[str, str]]) -> tuple[bytes, str]:
                 f"--{boundary}\r\n".encode(),
                 f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode(),
                 value.encode("utf-8"),
+                b"\r\n",
+            ]
+        )
+    for file in files:
+        chunks.extend(
+            [
+                f"--{boundary}\r\n".encode(),
+                (
+                    f'Content-Disposition: form-data; name="{file.field_name}"; '
+                    f'filename="{file.filename}"\r\n'
+                ).encode(),
+                f"Content-Type: {file.content_type}\r\n\r\n".encode(),
+                file.content,
                 b"\r\n",
             ]
         )
@@ -129,38 +190,129 @@ def run_smoke(config: SmokeConfig) -> None:
     _pass("Citizen login")
 
     me = citizen.request("GET", "/auth/me")
-    _require(me.get("email") == config.citizen_email, "Citizen auth cookie was not retained")
+    _require(
+        me.get("email") == config.citizen_email,
+        "Citizen auth cookie was not retained",
+    )
     _require(me.get("role") == "CITIZEN", "Authenticated user is not a citizen")
     _pass("Citizen authentication")
+
+    analysis = citizen.request(
+        "POST",
+        "/analyze-report",
+        json_body={
+            "description": SMOKE_DESCRIPTION,
+            "address": "서울특별시 중구 세종대로 110",
+        },
+    )
+    _require(
+        analysis.get("analysisMethod") == "RULE",
+        f"Report analysis method is not RULE: {analysis.get('analysisMethod')}",
+    )
+    categories = analysis.get("categories")
+    _require(
+        isinstance(categories, list)
+        and len(categories) > 1
+        and all(isinstance(category, str) for category in categories),
+        f"Report analysis did not detect multiple categories: {categories}",
+    )
+    suggested_agencies = analysis.get("suggestedAgencies")
+    _require(
+        isinstance(suggested_agencies, list)
+        and bool(suggested_agencies)
+        and all(isinstance(agency, str) for agency in suggested_agencies),
+        f"Report analysis returned no suggested agencies: {suggested_agencies}",
+    )
+    _require(
+        analysis.get("needsUserConfirmation") is False,
+        "Report analysis unexpectedly requires user confirmation",
+    )
+    severity = analysis.get("severity")
+    _require(
+        isinstance(severity, str) and bool(severity),
+        "Report analysis has no severity",
+    )
+    _pass("Report analysis: RULE")
+    _pass(f"Categories: {', '.join(categories)}")
+    _pass(f"Suggested agencies: {', '.join(suggested_agencies)}")
 
     created = citizen.request(
         "POST",
         "/reports",
         form_fields=[
-            ("description", "발표 전 자동 점검: 연기와 화재 위험이 있습니다."),
+            ("description", SMOKE_DESCRIPTION),
             ("address", "서울특별시 중구 세종대로 110"),
             ("latitude", "37.5665"),
             ("longitude", "126.9780"),
-            ("categories", "FIRE_RISK"),
-            ("severity", "MEDIUM"),
+            *(("categories", category) for category in categories),
+            ("severity", severity),
+        ],
+        form_files=[
+            MultipartFile(
+                field_name="image",
+                filename="demo-smoke.png",
+                content_type="image/png",
+                content=SMOKE_PNG,
+            )
         ],
         expected_status=201,
     )
     incident_id = created.get("incident", {}).get("id")
-    _require(isinstance(incident_id, int) and incident_id > 0, "Report response has no incident ID")
+    _require(
+        isinstance(incident_id, int) and incident_id > 0,
+        "Report response has no incident ID",
+    )
     _pass(f"Report created: incident #{incident_id}")
 
     created_agencies = created.get("agencies", [])
     assigned_types = [item.get("agencyType") for item in created_agencies]
-    _require(assigned_types == ["FIRE"], f"Unexpected FIRE_RISK routing: {assigned_types}")
+    _require(
+        set(assigned_types) == set(suggested_agencies),
+        "Incident routing does not match analysis: "
+        f"assigned={assigned_types}, suggested={suggested_agencies}",
+    )
+    _pass("Incident routing matches analysis")
     _pass(f"Agencies assigned: {', '.join(assigned_types)}")
 
+    created_image_url = created.get("report", {}).get("imageUrl")
+    _require(
+        isinstance(created_image_url, str) and bool(created_image_url),
+        "Report response has no presigned image URL",
+    )
+    _pass("S3 image uploaded")
+
     detail = citizen.request("GET", f"/incidents/{incident_id}")
-    _require(detail.get("id") == incident_id, "Incident detail ID does not match created incident")
+    _require(
+        detail.get("id") == incident_id,
+        "Incident detail ID does not match created incident",
+    )
+    detail_assigned_types = [
+        item.get("agencyType") for item in detail.get("agencies", [])
+    ]
+    _require(
+        set(detail_assigned_types) == set(suggested_agencies),
+        "Incident detail routing does not match analysis: "
+        f"assigned={detail_assigned_types}, suggested={suggested_agencies}",
+    )
     _require(
         any(item.get("agencyType") == "FIRE" for item in detail.get("agencies", [])),
         "Incident detail does not contain FIRE assignment",
     )
+    detail_image_url = detail.get("report", {}).get("imageUrl")
+    _require(
+        isinstance(detail_image_url, str) and bool(detail_image_url),
+        "Incident detail has no presigned image URL",
+    )
+    image_content, image_content_type = citizen.get_bytes(
+        detail_image_url,
+        label="Presigned image GET",
+    )
+    _require(bool(image_content), "Presigned image GET returned an empty body")
+    _require(
+        image_content_type.lower().startswith("image/"),
+        f"Presigned image Content-Type is not an image: {image_content_type or '<missing>'}",
+    )
+    _pass(f"Presigned image GET 200 ({image_content_type})")
     _pass("Citizen incident lookup")
 
     fire = ApiClient(config.base_url, config.timeout)
@@ -245,7 +397,9 @@ def run_smoke(config: SmokeConfig) -> None:
 
 
 def parse_args(argv: list[str] | None = None) -> SmokeConfig:
-    parser = argparse.ArgumentParser(description="Run the OneReport deployed API demo smoke test.")
+    parser = argparse.ArgumentParser(
+        description="Run the OneReport deployed API demo smoke test."
+    )
     parser.add_argument("--base-url", required=True, help="Service origin, e.g. http://localhost")
     parser.add_argument(
         "--password",
