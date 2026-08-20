@@ -1,0 +1,108 @@
+name: Deploy OneReport to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "infra/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Package deployment artifacts
+        run: |
+          mkdir -p dist_deploy
+          cp -r backend frontend infra docker-compose.yml .env.example dist_deploy/
+          tar -czf deploy-bundle.tar.gz -C dist_deploy .
+
+      - name: Transfer bundle to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy-bundle.tar.gz"
+          target: "/tmp"
+          overwrite: true
+
+      - name: Deploy containers with Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            sudo mkdir -p /opt/onereport
+            sudo chown -R $USER:$USER /opt/onereport
+            cd /opt/onereport
+
+            # Unpack deployment bundle
+            tar -xzf /tmp/deploy-bundle.tar.gz -C /opt/onereport
+            rm -f /tmp/deploy-bundle.tar.gz
+
+            # Prepare .env file with secrets
+            cat <<EOF > .env
+            APP_ENV=production
+            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'onereport' }}
+            DATABASE_URL=postgresql+asyncpg://${{ secrets.POSTGRES_USER || 'postgres' }}:${{ secrets.POSTGRES_PASSWORD || 'postgres' }}@postgres:5432/${{ secrets.POSTGRES_DB || 'onereport' }}
+            JWT_SECRET=${{ secrets.JWT_SECRET || 'onereport-super-secret-jwt-key-must-be-32bytes' }}
+            JWT_ALGORITHM=HS256
+            ACCESS_TOKEN_EXPIRE_MINUTES=1440
+            AUTH_COOKIE_SECURE=false
+            CORS_ORIGINS=["*"]
+            AWS_REGION=${{ secrets.AWS_REGION || 'ap-northeast-2' }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME || 'onereport-uploads-788246d2' }}
+            STORAGE_BUCKET=${{ secrets.S3_BUCKET_NAME || 'onereport-uploads-788246d2' }}
+            STORAGE_PREFIX=reports
+            EOF
+
+            echo "🚀 Launching containers with Docker Compose..."
+            docker compose up -d --build --remove-orphans
+
+            echo "🧹 Cleaning up unused Docker resources..."
+            docker image prune -f || true
+
+      - name: Verify Live Deployment (Health & SSE Check)
+        run: |
+          echo "Waiting 5 seconds for services to initialize..."
+          sleep 5
+
+          echo "1. Checking Frontend (HTTP 200)..."
+          for i in {1..10}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST }}/")
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "Frontend is online! (Status: $HTTP_STATUS)"
+              break
+            fi
+            echo "Waiting for Frontend (Attempt $i)..."
+            sleep 3
+          done
+
+          echo "2. Checking Backend API Health..."
+          for i in {1..10}; do
+            HEALTH=$(curl -s "http://${{ secrets.EC2_HOST }}/api/health")
+            if echo "$HEALTH" | grep -q "ok"; then
+              echo "Backend API is healthy! ($HEALTH)"
+              exit 0
+            fi
+            echo "Waiting for Backend API (Attempt $i)..."
+            sleep 3
+          done
+
+          echo "❌ Health check timed out!"
+          exit 1

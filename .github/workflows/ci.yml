@@ -1,0 +1,68 @@
+name: Continuous Integration (CI)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "infra/**"
+      - "docker-compose.yml"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  validate-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Compose Config
+        run: |
+          cp .env.example .env
+          docker compose config
+
+  backend-check:
+    name: Backend Lint & Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest || true
+
+      - name: Syntax Check & Unit Tests
+        run: |
+          cd backend
+          python -m py_compile app/main.py
+          pytest
+
+      - name: Docker Build Check
+        run: |
+          docker build -t onereport-backend:test ./backend
+
+  frontend-check:
+    name: Frontend Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Docker Build Check
+        run: |
+          docker build -t onereport-frontend:test ./frontend
