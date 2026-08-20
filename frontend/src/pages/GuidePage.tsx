@@ -44,11 +44,11 @@ const responseSteps = [
 ];
 
 const agencies = [
-  { name: "경찰", short: "112", copy: "교통사고 현장 통제", icon: ShieldCheck, className: "police" },
-  { name: "소방·구급", short: "119", copy: "구조·응급·화재 대응", icon: HeartPulse, className: "fire" },
-  { name: "한국전력", short: "한전", copy: "전기 설비 안전 조치", icon: Zap, className: "kepco" },
-  { name: "도로관리", short: "도로", copy: "도로 파손·시설 복구", icon: Route, className: "road" },
-  { name: "가스안전", short: "가스", copy: "가스 누출·안전 점검", icon: Flame, className: "gas" },
+  { name: "경찰", short: "112", copy: "교통사고 현장 통제", icon: ShieldCheck, className: "agency-police" },
+  { name: "소방·구급", short: "119", copy: "구조·응급·화재 대응", icon: HeartPulse, className: "agency-fire" },
+  { name: "한국전력", short: "한전", copy: "전기 설비 안전 조치", icon: Zap, className: "agency-kepco" },
+  { name: "도로관리", short: "도로", copy: "도로 파손·시설 복구", icon: Route, className: "agency-road" },
+  { name: "가스안전", short: "가스", copy: "가스 누출·안전 점검", icon: Flame, className: "agency-gas" },
 ];
 
 const agencyStatuses = ["배정", "접수", "출동", "도착", "대응", "완료"];
@@ -62,8 +62,8 @@ export function GuidePage() {
         <section className="guide-hero">
           <div className="guide-hero-copy">
             <span className="guide-eyebrow"><BadgeCheck size={16} /> OneReport 이용안내</span>
-            <h1>어디에 신고할지<br />고민하지 마세요.<br /><span>한 번의 신고를 필요한 기관에 연결합니다.</span></h1>
-            <p>OneReport는 상황과 위치를 분석해 필요한 공공기관·공기업·지자체·민원 채널을 찾고, 복합 상황은 하나의 Incident로 연결하는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
+            <h1><span className="guide-hero-question">어디에 신고할지 고민하지 마세요.</span><span>한 번의 신고를 필요한 기관에 연결합니다.</span></h1>
+            <p>현재 시연에서는 상황과 위치, 선택한 사고 유형을 바탕으로 대표 기관을 연결합니다. 장기적으로는 공공기관·공기업·지자체·민원 채널까지 하나의 Incident로 잇는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
             <div className="guide-hero-actions">
               <a href="/#report-form">지금 신고하기 <ArrowRight size={18} /></a>
               <a className="secondary" href="/reports/me">내 신고 확인</a>
@@ -182,7 +182,7 @@ export function GuidePage() {
           <div className="guide-faq-list">
             <details open>
               <summary>사고 유형을 정확히 모르겠어요.<ChevronDown size={17} /></summary>
-              <p>괜찮습니다. 보이는 상황을 구체적으로 작성하면 먼저 자동 분류하고, 결과가 없을 때 가장 가까운 사고 유형을 직접 선택하도록 안내합니다.</p>
+              <p>괜찮습니다. 보이는 상황을 구체적으로 작성하고 가장 가까운 사고 유형을 선택하면, OneReport가 선택 정보를 바탕으로 필요한 기관을 연결합니다.</p>
             </details>
             <details>
               <summary>신고 후 진행 상황은 어디서 보나요?<ChevronDown size={17} /></summary>

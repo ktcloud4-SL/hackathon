@@ -53,6 +53,35 @@ GET  /auth/me
 
 ## 신고
 
+### `POST /analyze-report`
+
+신고 생성 전에 설명을 규칙 기반으로 분석해 Category와 Severity를 추천합니다. 이 API는 데이터를 저장하지 않으며 기관 추천은 기존 Category Routing 규칙을 사용합니다. 분류에 실패해도 오류 대신 `needsUserConfirmation: true`를 반환합니다.
+
+```json
+{
+  "description": "차량이 전봇대를 들이받았고 사람이 다쳤으며 전선에서 불꽃이 납니다.",
+  "address": "서울특별시 강남구 테헤란로 1"
+}
+```
+
+```json
+{
+  "categories": ["TRAFFIC_ACCIDENT", "HUMAN_INJURY", "ELECTRIC_DAMAGE", "FIRE_RISK"],
+  "severity": "HIGH",
+  "suggestedAgencies": ["POLICE", "ROAD", "FIRE", "KEPCO"],
+  "summary": "교통사고, 인명 피해, 전기 설비 파손, 화재 위험 요소가 함께 감지된 복합 상황입니다.",
+  "confidence": 0.95,
+  "reasons": [
+    "차량 표현에서 교통사고 가능성을 감지했습니다.",
+    "다쳤 표현에서 인명 피해 가능성을 감지했습니다."
+  ],
+  "needsUserConfirmation": false,
+  "analysisMethod": "RULE"
+}
+```
+
+분석 결과는 추천이며 시민이 Category를 확인·수정한 뒤 기존 `POST /reports`로 신고를 생성합니다.
+
 ### `POST /reports`
 
 `multipart/form-data`로 신고를 생성합니다. 사진은 한 장만 지원합니다.
@@ -66,8 +95,9 @@ GET  /auth/me
 | `image` | 아니오 |
 | `categories` | 예 (같은 필드 반복으로 복수 전달) |
 | `categoryHint` | 아니오 (기존 Frontend 호환용 단일 Category) |
+| `severity` | 아니오 (`MEDIUM` 기본값) |
 
-Backend는 한 요청에서 검증, 사용자가 선택한 Category 저장, Incident 생성, 기관 배정까지 처리합니다. MVP에서는 자동 분류를 수행하지 않으며 `severity`를 생략하면 `MEDIUM`을 사용합니다.
+Backend는 한 요청에서 검증, 사용자가 확인한 Category 저장, Incident 생성, 기관 배정까지 처리합니다. `severity`를 생략하면 `MEDIUM`을 사용합니다.
 
 ```json
 {

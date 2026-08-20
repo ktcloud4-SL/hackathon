@@ -78,7 +78,7 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET || 'onereport-super-secret-jwt-key-must-be-32bytes' }}
             JWT_ALGORITHM=HS256
             ACCESS_TOKEN_EXPIRE_MINUTES=1440
-            AUTH_COOKIE_SECURE=${{ secrets.AUTH_COOKIE_SECURE || 'true' }}
+            AUTH_COOKIE_SECURE=true
             CORS_ORIGINS=["*"]
             AWS_REGION=${{ secrets.AWS_REGION || 'ap-northeast-2' }}
             S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME || 'onereport-uploads-788246d2' }}
