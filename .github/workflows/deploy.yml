@@ -49,7 +49,8 @@ jobs:
             sudo chown -R $USER:$USER /opt/onereport
             cd /opt/onereport
 
-            # Unpack deployment bundle
+            # Clean stale source directories and unpack deployment bundle
+            rm -rf /opt/onereport/frontend/src /opt/onereport/backend/app /opt/onereport/backend/tests
             tar -xzf /tmp/deploy-bundle.tar.gz -C /opt/onereport
             rm -f /tmp/deploy-bundle.tar.gz
 
