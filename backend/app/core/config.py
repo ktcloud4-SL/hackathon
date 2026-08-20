@@ -20,8 +20,10 @@ class Settings(BaseSettings):
     sse_heartbeat_seconds: float = Field(default=15.0, gt=0)
     database_url: str = "postgresql+asyncpg://onereport:onereport@localhost:5432/onereport"
 
-    storage_bucket: str | None = None
-    storage_prefix: str = "reports"
+    aws_region: str | None = None
+    s3_bucket: str | None = None
+    s3_prefix: str = "reports"
+    s3_presigned_url_expire_seconds: int = Field(default=900, gt=0)
     public_data_base_url: str | None = None
     public_data_api_key: SecretStr | None = None
 
