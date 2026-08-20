@@ -40,6 +40,7 @@ import {
 } from "../api/auth";
 import { ApiError } from "../api/http";
 import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
@@ -559,6 +560,11 @@ export function AdminDashboardPage() {
                     <span key={category}>{categoryLabel[category]}</span>
                   ))}
                 </div>
+                <IncidentPhoto
+                  imageUrl={selectedIncident.report.imageUrl}
+                  incidentId={selectedIncident.id}
+                  compact
+                />
               </div>
 
               <div className="admin-actions-card">

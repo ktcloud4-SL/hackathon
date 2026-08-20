@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { CitizenHeader } from "../components/CitizenHeader";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { loadReportResult } from "../state/reportResult";
 import type { AgencyType, Category, Severity } from "../types/report";
 import "./citizen-flow.css";
@@ -222,6 +223,10 @@ export function AnalysisResultPage() {
               <div><Clock3 size={17} /><span><small>접수 시각</small><strong>{formatCreatedAt(result.incident.createdAt)}</strong></span></div>
             </div>
           </div>
+          <IncidentPhoto
+            imageUrl={result.report.imageUrl}
+            incidentId={result.incident.id}
+          />
         </section>
 
         <section className="analysis-confirm-bar">
