@@ -336,10 +336,16 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 24px;
   text-align: left;
 }
 
-.guide-section-heading.inline p { max-width: 330px; text-align: right; }
+.guide-section-heading.inline p {
+  max-width: none;
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}
 
 .guide-agency-grid {
   display: grid;
@@ -361,10 +367,10 @@
 
 .guide-agency-grid article > svg { display: none; }
 .guide-agency-symbol { display: grid; width: 39px; height: 39px; place-items: center; color: #fff; border-radius: 11px; background: #285b7b; font-size: 10px; font-weight: 800; }
-.guide-agency-grid .fire .guide-agency-symbol { background: #c95140; }
-.guide-agency-grid .kepco .guide-agency-symbol { background: #e28c2a; }
-.guide-agency-grid .road .guide-agency-symbol { background: #438067; }
-.guide-agency-grid .gas .guide-agency-symbol { background: #7967a5; }
+.guide-agency-grid .agency-fire .guide-agency-symbol { background: #c95140; }
+.guide-agency-grid .agency-kepco .guide-agency-symbol { background: #e28c2a; }
+.guide-agency-grid .agency-road .guide-agency-symbol { background: #438067; }
+.guide-agency-grid .agency-gas .guide-agency-symbol { background: #7967a5; }
 .guide-agency-grid strong { display: block; color: #334039; font-size: 11px; }
 .guide-agency-grid small { display: block; margin-top: 2px; color: #8a948e; font-size: 7px; }
 
@@ -446,7 +452,7 @@
   .guide-step-arrow { display: none; }
   .guide-scope-section { padding: 28px 22px; }
   .guide-section-heading.inline { align-items: flex-start; flex-direction: column; }
-  .guide-section-heading.inline p { text-align: left; }
+  .guide-section-heading.inline p { text-align: left; white-space: normal; }
   .guide-agency-grid { grid-template-columns: repeat(2, 1fr); }
   .guide-agency-expansion { text-align: left; }
   .guide-status-section { padding: 30px 22px; }
