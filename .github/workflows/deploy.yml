@@ -45,12 +45,27 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            sudo mkdir -p /opt/onereport
-            sudo chown -R $USER:$USER /opt/onereport
-            cd /opt/onereport
+            deploy_root=/opt/onereport
+            sudo mkdir -p "$deploy_root"
+            sudo chown -R "$USER:$USER" "$deploy_root"
+
+            # The bundle is copied over an existing release directory. Remove only
+            # deployed source files first so files deleted from Git cannot remain in
+            # a later Docker build context. Docker volumes (including PostgreSQL
+            # data) and the runtime .env file are outside this cleanup scope.
+            if [ "$deploy_root" != "/opt/onereport" ]; then
+              echo "Unexpected deployment root: $deploy_root"
+              exit 1
+            fi
+            rm -rf -- \
+              "$deploy_root/backend" \
+              "$deploy_root/frontend" \
+              "$deploy_root/infra"
+            rm -f -- "$deploy_root/docker-compose.yml" "$deploy_root/.env.example"
+            cd "$deploy_root"
 
             # Unpack deployment bundle
-            tar -xzf /tmp/deploy-bundle.tar.gz -C /opt/onereport
+            tar -xzf /tmp/deploy-bundle.tar.gz -C "$deploy_root"
             rm -f /tmp/deploy-bundle.tar.gz
 
             # Prepare .env file with secrets
