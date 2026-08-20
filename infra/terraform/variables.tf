@@ -27,3 +27,36 @@ variable "allowed_ssh_cidr" {
   description = "CIDR block allowed to SSH to the instance"
   default     = "0.0.0.0/0"
 }
+
+# RDS Variables
+variable "db_name" {
+  type        = string
+  description = "Database name for RDS PostgreSQL"
+  default     = "onereport"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Master username for RDS PostgreSQL"
+  default     = "postgres"
+}
+
+variable "db_password" {
+  type        = string
+  description = "Master password for RDS PostgreSQL"
+  default     = "onereportsecurepass2026"
+  sensitive   = true
+}
+
+variable "db_instance_class" {
+  type        = string
+  description = "RDS PostgreSQL instance class"
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  type        = number
+  description = "Allocated storage for RDS in GB"
+  default     = 20
+}
+
