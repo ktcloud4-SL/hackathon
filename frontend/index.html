@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneReport DevOps Infrastructure Ready</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(37, 99, 235, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-offline {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            display: inline-block;
+        }
+
+        pre {
+            background-color: #0b1120;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            max-height: 180px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.75rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .guide-section {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .guide-section h3 {
+            margin-bottom: 0.75rem;
+            color: #38bdf8;
+        }
+
+        .guide-list {
+            list-style: none;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .guide-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .guide-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <span class="badge">DevOps Infrastructure Ready</span>
+            <h1>OneReport 시스템 대시보드</h1>
+            <p class="subtitle">한 번의 신고, 하나의 Incident, 여러 기관의 공동대응</p>
+        </header>
+
+        <div class="grid">
+            <!-- Backend Health Card -->
+            <div class="card">
+                <h2>
+                    Backend API
+                    <span id="api-status" class="status-pill status-offline">
+                        <span class="status-dot"></span> Checking
+                    </span>
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                    엔드포인트: <code>/api/health</code>
+                </p>
+                <pre id="api-response">Loading...</pre>
+                <button onclick="checkBackendHealth()">API 상태 새로고침</button>
+            </div>
+
+            <!-- SSE Stream Test Card -->
+            <div class="card">
+                <h2>
+                    SSE 실시간 스트림
+                    <span id="sse-status" class="status-pill status-offline">
+                        <span class="status-dot"></span> Disconnected
+                    </span>
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                    스트림: <code>/api/incidents/1/events</code>
+                </p>
+                <pre id="sse-logs">Waiting for SSE events...</pre>
+                <button onclick="toggleSSE()" id="sse-btn">SSE 연결 시작</button>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h3>🚀 DevOps 인프라 배포 상태</h3>
+            <ul class="guide-list">
+                <li><strong>Nginx Reverse Proxy:</strong> 포트 80에서 동작 중 (Frontend, Backend Proxy 및 SSE Buffering 비활성화 적용)</li>
+                <li><strong>Backend Skeleton:</strong> FastAPI (Port 8000) 정상 구동 중</li>
+                <li><strong>Frontend Skeleton:</strong> Web Container (Port 3000) 정상 구동 중</li>
+                <li><strong>타 팀(BE/FE) 코드 합류 준비:</strong> 해당 디렉터리에 코드 푸시 시 CI/CD 자동 빌드 & 배포 지원</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function checkBackendHealth() {
+            const statusEl = document.getElementById('api-status');
+            const resEl = document.getElementById('api-response');
+            try {
+                const res = await fetch('/api/health');
+                const data = await res.json();
+                statusEl.className = 'status-pill status-online';
+                statusEl.innerHTML = '<span class="status-dot"></span> Connected';
+                resEl.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                statusEl.className = 'status-pill status-offline';
+                statusEl.innerHTML = '<span class="status-dot"></span> Error';
+                resEl.innerText = 'Failed to connect: ' + err.message;
+            }
+        }
+
+        let eventSource = null;
+        function toggleSSE() {
+            const statusEl = document.getElementById('sse-status');
+            const logEl = document.getElementById('sse-logs');
+            const btnEl = document.getElementById('sse-btn');
+
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                statusEl.className = 'status-pill status-offline';
+                statusEl.innerHTML = '<span class="status-dot"></span> Disconnected';
+                btnEl.innerText = 'SSE 연결 시작';
+                logEl.innerText += '\n[Disconnected]';
+                return;
+            }
+
+            logEl.innerText = 'Connecting to SSE...\n';
+            eventSource = new EventSource('/api/incidents/1/events');
+
+            eventSource.onopen = () => {
+                statusEl.className = 'status-pill status-online';
+                statusEl.innerHTML = '<span class="status-dot"></span> Streaming';
+                btnEl.innerText = 'SSE 연결 종료';
+            };
+
+            eventSource.addEventListener('ping', (event) => {
+                logEl.innerText = `[Received #${event.lastEventId}] ${event.data}\n` + logEl.innerText.slice(0, 500);
+            });
+
+            eventSource.onerror = () => {
+                statusEl.className = 'status-pill status-offline';
+                statusEl.innerHTML = '<span class="status-dot"></span> Stream Error';
+                logEl.innerText = '[SSE Error or Disconnected]\n' + logEl.innerText;
+            };
+        }
+
+        // Auto check on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkBackendHealth();
+            setTimeout(toggleSSE, 500);
+        });
+    </script>
+</body>
+</html>
