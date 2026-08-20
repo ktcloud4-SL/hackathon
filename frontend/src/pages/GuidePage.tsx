@@ -44,11 +44,11 @@ const responseSteps = [
 ];
 
 const agencies = [
-  { name: "경찰", short: "112", copy: "교통사고 현장 통제", icon: ShieldCheck, className: "police" },
-  { name: "소방·구급", short: "119", copy: "구조·응급·화재 대응", icon: HeartPulse, className: "fire" },
-  { name: "한국전력", short: "한전", copy: "전기 설비 안전 조치", icon: Zap, className: "kepco" },
-  { name: "도로관리", short: "도로", copy: "도로 파손·시설 복구", icon: Route, className: "road" },
-  { name: "가스안전", short: "가스", copy: "가스 누출·안전 점검", icon: Flame, className: "gas" },
+  { name: "경찰", short: "112", copy: "교통사고 현장 통제", icon: ShieldCheck, className: "agency-police" },
+  { name: "소방·구급", short: "119", copy: "구조·응급·화재 대응", icon: HeartPulse, className: "agency-fire" },
+  { name: "한국전력", short: "한전", copy: "전기 설비 안전 조치", icon: Zap, className: "agency-kepco" },
+  { name: "도로관리", short: "도로", copy: "도로 파손·시설 복구", icon: Route, className: "agency-road" },
+  { name: "가스안전", short: "가스", copy: "가스 누출·안전 점검", icon: Flame, className: "agency-gas" },
 ];
 
 const agencyStatuses = ["배정", "접수", "출동", "도착", "대응", "완료"];
