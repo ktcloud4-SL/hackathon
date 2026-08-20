@@ -27,6 +27,11 @@ class TimelineEventView(ApiModel):
     metadata: dict[str, Any]
 
 
+class TimelineEventList(ApiModel):
+    items: list[TimelineEventView]
+    total: int
+
+
 class SSEEnvelope(ApiModel):
     type: EventType
     incident_id: int
