@@ -877,6 +877,10 @@
   min-height: 64px;
 }
 
+.citizen-timeline li > div {
+  min-width: 0;
+}
+
 .citizen-timeline li:not(:last-child)::before {
   content: "";
   position: absolute;
@@ -930,6 +934,7 @@
   color: #35423b;
   font-size: 12px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .summary-location {

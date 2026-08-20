@@ -167,7 +167,7 @@
 .agency-detail-top b.severity-low { background: #5e846f; }
 .agency-detail-top b[class^="incident-"] { color: #56665e; background: #edf2ee; }
 .agency-detail-top > time { color: #9aa39e; font-size: 7px; }
-.agency-detail-hero h3 { max-width: 680px; margin: 15px 0 8px; color: #26322b; font-size: 15px; line-height: 1.5; word-break: keep-all; }
+.agency-detail-hero h3 { max-width: 680px; margin: 15px 0 8px; color: #26322b; font-size: 15px; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
 .agency-detail-hero > p { display: flex; align-items: center; gap: 5px; margin: 0; color: #7f8a84; font-size: 8px; }
 .agency-detail-hero > p svg { color: var(--agency-accent); }
 .agency-category-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
@@ -222,13 +222,13 @@
 .agency-timeline-item > div:first-child span { display: grid; place-items: center; width: 19px; height: 19px; color: #9aa49e; border: 1px solid #d6ddd8; border-radius: 50%; background: white; }
 .agency-timeline-item > div:first-child span.latest { color: white; border-color: var(--agency-accent); background: var(--agency-accent); box-shadow: 0 0 0 4px var(--agency-pale); }
 .agency-timeline-item > div:first-child > i { width: 1px; flex: 1; background: #dde4df; }
-.agency-timeline-item > div:last-child { padding: 1px 0 12px; }
+.agency-timeline-item > div:last-child { min-width: 0; padding: 1px 0 12px; }
 .agency-timeline-item > div:last-child > div { display: flex; justify-content: space-between; gap: 12px; }
-.agency-timeline-item strong { color: #4b5851; font-size: 8px; font-weight: 600; line-height: 1.5; }
+.agency-timeline-item strong { color: #4b5851; font-size: 8px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
 .agency-timeline-item time { flex: 0 0 auto; color: #89948e; font-family: "Manrope", sans-serif; font-size: 7px; }
 .agency-timeline-item p { margin: 5px 0 0; padding: 6px 8px; color: #7b5c4d; border-radius: 6px; background: #fff3ed; font-size: 7px; }
 
-.support-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(13,25,19,.6); backdrop-filter: blur(5px); }
+.support-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow-y: auto; padding: 20px; background: rgba(13,25,19,.6); backdrop-filter: blur(5px); }
 .support-modal { width: min(460px,100%); padding: 24px; border-radius: 20px; background: white; box-shadow: 0 30px 90px rgba(8,22,15,.32); animation: agencyModalIn .22s ease-out; }
 .support-modal-heading { display: flex; justify-content: space-between; align-items: center; }
 .support-modal-heading > div { display: flex; align-items: center; gap: 10px; }

@@ -67,10 +67,10 @@ const incidentStatusLabel: Record<IncidentStatus, string> = {
 
 const agencyLabel: Record<AgencyType, string> = {
   POLICE: "경찰",
-  FIRE: "119",
-  KEPCO: "한전",
+  FIRE: "소방·구급 · 119",
+  KEPCO: "한국전력",
   ROAD: "도로관리",
-  GAS: "가스기관",
+  GAS: "가스안전",
 };
 
 const agencyStatusLabel: Record<AgencyStatus, string> = {
