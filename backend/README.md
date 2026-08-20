@@ -7,7 +7,8 @@ Python 3.12와 FastAPI를 사용하는 MVP Backend입니다.
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -r requirements.txt
-cp .env.example .env
+cp ../.env.example .env
+# 로컬에서 직접 실행할 때 DATABASE_URL host를 localhost로 변경
 .venv/bin/alembic upgrade head
 .venv/bin/uvicorn app.main:app --reload
 ```
@@ -20,6 +21,7 @@ cp .env.example .env
 - Incident 단위 SSE 인증, 권한 확인, heartbeat, broadcast
 - 공통 API 오류 응답과 credential CORS
 - Boto3 기본 자격 증명 체인 기반 Amazon S3 Adapter
+- 규칙 기반 신고 자동분석과 기존 Routing을 재사용한 기관 추천
 - 선택 기능인 공공데이터 연동의 No-op 및 best-effort 경계
 - PostgreSQL/SQLAlchemy 기반 User, Agency, Report, Incident, IncidentAgency, TimelineEvent
 - 사용자 선택 Category JSON 저장과 기관 Routing, 기관 상태 전이, 지원 요청, 관리자 종료
@@ -29,6 +31,6 @@ DB adapter는 기존 인증의 `UserRepository`와 SSE 접근 제어의
 `IncidentAccessChecker` 인터페이스를 구현합니다. 현재 Broker는 해커톤용 단일
 Backend 프로세스를 전제로 합니다.
 
-Amazon S3는 `S3_BUCKET`이 설정된 경우에만 초기화합니다. DB에는 `object_key`만
+Amazon S3는 `S3_BUCKET`, `S3_BUCKET_NAME`, `STORAGE_BUCKET` 중 하나가 설정된 경우에만 초기화합니다. DB에는 `object_key`만
 저장하고 API 응답에는 짧은 수명의 Presigned GET URL을 반환합니다. 버킷 생성과
 IAM Role 권한 부여는 Backend 범위에 포함하지 않습니다.
