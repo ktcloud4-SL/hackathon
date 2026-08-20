@@ -18,8 +18,7 @@ MVP는 실제 112·119·전력기관 시스템에 신고하지 않습니다. 모
 
 ```text
 Report = 시민의 원본 신고
-Incident = 공동대응 단위
-IncidentCategory = 사고·위험 유형
+Incident = 공동대응 단위이며 선택 Category를 JSON 배열로 저장
 IncidentAgency = 참여 기관과 대응 상태
 TimelineEvent = 주요 변경 기록
 ```
@@ -43,7 +42,7 @@ POLICE | FIRE | KEPCO | ROAD | GAS
 
 ## 분류와 Routing
 
-AI가 아니라 키워드 Rule로 복수 Category를 분류합니다. 분류 결과가 없으면 시민이 `categoryHint`를 선택해 다시 요청합니다.
+시민이 신고 시 복수 Category를 직접 선택합니다. MVP에서는 자동 Classification을 수행하지 않으며, 향후 분류 방식이 바뀌어도 아래 Routing 규칙 이후 흐름은 그대로 재사용합니다.
 
 | Category | Agency |
 | --- | --- |

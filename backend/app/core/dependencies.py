@@ -1,9 +1,10 @@
 """Authentication, repository, and SSE dependencies."""
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import Annotated
 
 from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings, get_settings
 from app.core.errors import (
@@ -21,6 +22,7 @@ from app.services.event_publisher import (
     SSEIncidentEventPublisher,
 )
 from app.services.incident_access import IncidentAccessChecker
+from app.services.incidents import IncidentService
 from app.services.sse import SSEBroker
 
 
@@ -102,3 +104,22 @@ def get_incident_context_provider(request: Request) -> IncidentContextProvider:
     if provider is None:
         raise ServiceNotReadyError("IncidentContextProvider")
     return provider
+
+
+async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
+    session_factory: async_sessionmaker[AsyncSession] | None = getattr(
+        request.app.state, "session_factory", None
+    )
+    if session_factory is None:
+        raise ServiceNotReadyError("Database")
+    async with session_factory() as session:
+        yield session
+
+
+def get_incident_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    publisher: Annotated[
+        IncidentEventPublisher, Depends(get_incident_event_publisher)
+    ],
+) -> IncidentService:
+    return IncidentService(session, publisher)
