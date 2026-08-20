@@ -2,8 +2,19 @@ import type {
   CreateReportInput,
   CreateReportResponse,
   MyReportsResponse,
+  ReportAnalysisInput,
+  ReportAnalysisResponse,
 } from "../types/report";
 import { requestJson } from "./http";
+
+export function analyzeReport(
+  input: ReportAnalysisInput,
+): Promise<ReportAnalysisResponse> {
+  return requestJson<ReportAnalysisResponse>("/api/analyze-report", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
 
 export async function createReport(
   input: CreateReportInput,
@@ -16,6 +27,7 @@ export async function createReport(
 
   if (input.image) body.append("image", input.image);
   input.categories.forEach((category) => body.append("categories", category));
+  body.append("severity", input.severity);
 
   return requestJson<CreateReportResponse>("/api/reports", {
     method: "POST",

@@ -14,19 +14,21 @@ import {
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/http";
-import { createReport } from "../api/reports";
+import { analyzeReport, createReport } from "../api/reports";
 import { CitizenHeader } from "../components/CitizenHeader";
 import { CategoryHintModal } from "../components/CategoryHintModal";
 import { AiAnalysisModal } from "../components/AiAnalysisModal";
 import { saveReportResult } from "../state/reportResult";
-import type { Category } from "../types/report";
+import type { Category, Severity } from "../types/report";
+import {
+  hasUsableRecommendation,
+  withMinimumDuration,
+} from "../utils/reportAnalysis";
 
 interface Coordinates {
   latitude: number;
   longitude: number;
 }
-
-const MIN_ANALYSIS_DISPLAY_MS = 2200;
 
 const addressSuggestions = [
   {
@@ -61,6 +63,9 @@ export function ReportPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [recommendedSeverity, setRecommendedSeverity] = useState<Severity>("MEDIUM");
+  const [hasRecommendation, setHasRecommendation] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -140,7 +145,6 @@ export function ReportPage() {
     setIsCategoryModalOpen(false);
     setIsSubmitting(true);
     setNotice(null);
-    const analysisStartedAt = performance.now();
 
     try {
       const result = await createReport({
@@ -150,14 +154,8 @@ export function ReportPage() {
         longitude: coordinates.longitude,
         image: image ?? undefined,
         categories: selectedCategories,
+        severity: recommendedSeverity,
       });
-      const remainingDisplayTime = Math.max(
-        0,
-        MIN_ANALYSIS_DISPLAY_MS - (performance.now() - analysisStartedAt),
-      );
-      if (remainingDisplayTime > 0) {
-        await new Promise((resolve) => window.setTimeout(resolve, remainingDisplayTime));
-      }
       saveReportResult(result);
       window.location.assign("/report/analysis");
     } catch (error) {
@@ -174,6 +172,33 @@ export function ReportPage() {
     }
   };
 
+  const analyzeBeforeSubmit = async () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategories([]);
+    setRecommendedSeverity("MEDIUM");
+    setHasRecommendation(false);
+    setIsAnalyzing(true);
+    setNotice(null);
+
+    try {
+      const analysis = await withMinimumDuration(
+        analyzeReport({ description: description.trim(), address }),
+      );
+      const hasCategories = analysis.categories.length > 0;
+      setSelectedCategories(analysis.categories);
+      setRecommendedSeverity(analysis.severity);
+      setHasRecommendation(hasUsableRecommendation(analysis));
+      if (!hasCategories || analysis.needsUserConfirmation) {
+        setNotice("자동으로 사고 유형을 분류하지 못했습니다. 유형을 직접 선택해 주세요.");
+      }
+    } catch {
+      setNotice("자동 분석을 완료하지 못했습니다. 사고 유형을 직접 선택해 주세요.");
+    } finally {
+      setIsAnalyzing(false);
+      setIsCategoryModalOpen(true);
+    }
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -187,8 +212,7 @@ export function ReportPage() {
       return;
     }
 
-    setIsCategoryModalOpen(true);
-    setNotice(null);
+    void analyzeBeforeSubmit();
   };
 
   return (
@@ -381,8 +405,8 @@ export function ReportPage() {
                 <ShieldCheck size={18} />
                 입력한 정보는 사고 대응 목적으로만 사용됩니다.
               </div>
-              <button className="submit-button" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "신고 접수 중..." : "사고 유형 선택하기"}
+              <button className="submit-button" type="submit" disabled={isSubmitting || isAnalyzing}>
+                {isAnalyzing ? "신고 내용 분석 중..." : isSubmitting ? "신고 접수 중..." : "신고 내용 분석하기"}
                 <ChevronRight size={20} />
               </button>
             </div>
@@ -450,6 +474,7 @@ export function ReportPage() {
       {isCategoryModalOpen && (
         <CategoryHintModal
           selected={selectedCategories}
+          hasRecommendation={hasRecommendation}
           onToggle={(category) => setSelectedCategories((current) =>
             current.includes(category)
               ? current.filter((item) => item !== category)
@@ -463,7 +488,7 @@ export function ReportPage() {
         />
       )}
 
-      {isSubmitting && <AiAnalysisModal />}
+      {isAnalyzing && <AiAnalysisModal />}
     </div>
   );
 }
