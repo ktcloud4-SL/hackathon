@@ -1,8 +1,10 @@
 import {
   Activity,
   ArrowRight,
+  Building2,
   CarFront,
   Check,
+  CircleAlert,
   Flame,
   HeartPulse,
   Route,
@@ -11,8 +13,29 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect } from "react";
-import type { Category } from "../types/report";
+import type {
+  AgencyType,
+  Category,
+  ReportAnalysisResponse,
+  Severity,
+} from "../types/report";
+import { getAnalysisHighlights } from "../utils/reportAnalysis";
 import "./category-hint-modal.css";
+
+const severityLabels: Record<Severity, string> = {
+  LOW: "낮음",
+  MEDIUM: "보통",
+  HIGH: "높음",
+  CRITICAL: "긴급",
+};
+
+const agencyLabels: Record<AgencyType, string> = {
+  POLICE: "경찰",
+  FIRE: "소방·구급",
+  KEPCO: "한국전력",
+  ROAD: "도로관리",
+  GAS: "가스안전",
+};
 
 const categoryOptions: Array<{
   value: Category;
@@ -68,6 +91,7 @@ const categoryOptions: Array<{
 interface CategoryHintModalProps {
   selected: Category[];
   hasRecommendation?: boolean;
+  analysis?: ReportAnalysisResponse | null;
   onToggle: (category: Category) => void;
   onConfirm: () => void;
   onClose: () => void;
@@ -76,10 +100,13 @@ interface CategoryHintModalProps {
 export function CategoryHintModal({
   selected,
   hasRecommendation = false,
+  analysis = null,
   onToggle,
   onConfirm,
   onClose,
 }: CategoryHintModalProps) {
+  const highlights = getAnalysisHighlights(analysis);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -113,11 +140,49 @@ export function CategoryHintModal({
           <button type="button" onClick={onClose} aria-label="사고 유형 선택 닫기"><X size={20} /></button>
         </header>
 
-        <p className="category-modal-description">
-          {hasRecommendation
-            ? "신고 설명에서 감지한 추천입니다. 필요하면 수정한 뒤 접수해 주세요."
-            : "자동으로 분류하지 못했습니다. 해당하는 유형을 하나 이상 직접 선택해 주세요."}
-        </p>
+        {highlights ? (
+          <section className="analysis-highlights" aria-label="상황 분석 요약">
+            <div className="analysis-highlight-summary">
+              <div>
+                <span>상황 분석 요약</span>
+                <p>{highlights.summary}</p>
+              </div>
+              <span className={`analysis-severity severity-${highlights.severity.toLowerCase()}`}>
+                긴급도 {severityLabels[highlights.severity]}
+              </span>
+            </div>
+
+            {highlights.suggestedAgencies.length > 0 && (
+              <div className="analysis-highlight-row">
+                <strong><Building2 size={15} />상황에 필요한 대응기관</strong>
+                <div className="analysis-agency-list">
+                  {highlights.suggestedAgencies.map((agency) => (
+                    <span key={agency}>{agencyLabels[agency]}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {highlights.reasons.length > 0 && (
+              <div className="analysis-highlight-row analysis-reasons">
+                <strong><CircleAlert size={15} />분석 근거</strong>
+                <ul>
+                  {highlights.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                </ul>
+              </div>
+            )}
+          </section>
+        ) : (
+          <p className="category-modal-description">
+            자동으로 분류하지 못했습니다. 해당하는 유형을 하나 이상 직접 선택해 주세요.
+          </p>
+        )}
+
+        {hasRecommendation && (
+          <p className="category-modal-description category-recommendation-guide">
+            추천 결과를 확인하고 필요하면 사고 유형을 수정한 뒤 접수해 주세요.
+          </p>
+        )}
 
         <div className="category-option-grid" role="group" aria-label="사고 유형">
           {categoryOptions.map((option) => {

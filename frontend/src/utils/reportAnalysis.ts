@@ -1,4 +1,8 @@
-import type { ReportAnalysisResponse } from "../types/report";
+import type {
+  AgencyType,
+  ReportAnalysisResponse,
+  Severity,
+} from "../types/report";
 
 export const MIN_ANALYSIS_DISPLAY_MS = 2200;
 
@@ -27,4 +31,24 @@ export function hasUsableRecommendation(
   analysis: ReportAnalysisResponse,
 ): boolean {
   return analysis.categories.length > 0 && !analysis.needsUserConfirmation;
+}
+
+export interface AnalysisHighlights {
+  summary: string;
+  severity: Severity;
+  suggestedAgencies: AgencyType[];
+  reasons: string[];
+}
+
+export function getAnalysisHighlights(
+  analysis: ReportAnalysisResponse | null,
+): AnalysisHighlights | null {
+  if (!analysis || !hasUsableRecommendation(analysis)) return null;
+
+  return {
+    summary: analysis.summary,
+    severity: analysis.severity,
+    suggestedAgencies: analysis.suggestedAgencies,
+    reasons: analysis.reasons.slice(0, 3),
+  };
 }
