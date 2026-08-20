@@ -11,16 +11,34 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.errors import AppError
+from app.db.database import create_database
+from app.db.repositories import (
+    SQLAlchemyIncidentAccessRepository,
+    SQLAlchemyUserRepository,
+)
 from app.integrations.gcs import GoogleCloudObjectStorage
 from app.integrations.public_data import NoopIncidentContextProvider
 from app.routers.auth import router as auth_router
+from app.routers.agencies import router as agencies_router
 from app.routers.events import router as events_router
+from app.routers.incidents import router as incidents_router
+from app.routers.reports import router as reports_router
+from app.services.incident_access import IncidentAccessService
 from app.services.sse import SSEBroker
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
+    engine, session_factory = create_database(settings.database_url)
+    app.state.database_engine = engine
+    app.state.session_factory = session_factory
+    if not hasattr(app.state, "user_repository"):
+        app.state.user_repository = SQLAlchemyUserRepository(session_factory)
+    if not hasattr(app.state, "incident_access_checker"):
+        app.state.incident_access_checker = IncidentAccessService(
+            SQLAlchemyIncidentAccessRepository(session_factory)
+        )
     app.state.sse_broker = SSEBroker(settings.sse_heartbeat_seconds)
     app.state.incident_context_provider = NoopIncidentContextProvider()
     if settings.storage_bucket:
@@ -28,7 +46,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             bucket_name=settings.storage_bucket,
             object_prefix=settings.storage_prefix,
         )
-    yield
+    try:
+        yield
+    finally:
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -42,6 +63,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     application.include_router(auth_router, prefix="/api")
+    application.include_router(reports_router, prefix="/api")
+    application.include_router(incidents_router, prefix="/api")
+    application.include_router(agencies_router, prefix="/api")
     application.include_router(events_router, prefix="/api")
 
     @application.exception_handler(AppError)

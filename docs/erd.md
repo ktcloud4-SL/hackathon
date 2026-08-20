@@ -8,7 +8,6 @@
 Agency 1 ── N User
 User 1 ── N Report
 Report 1 ── 1 Incident
-Incident 1 ── N IncidentCategory
 Incident 1 ── N IncidentAgency N ── 1 Agency
 Incident 1 ── N TimelineEvent
 ```
@@ -67,19 +66,14 @@ status      VARCHAR NOT NULL
 severity    VARCHAR NOT NULL
 created_at  TIMESTAMPTZ NOT NULL
 updated_at  TIMESTAMPTZ NOT NULL
+categories  JSONB NOT NULL
+resolved_at TIMESTAMPTZ NULL
+closed_at   TIMESTAMPTZ NULL
 ```
 
 `report_id`의 UNIQUE 제약으로 Report와 Incident의 1:1 관계를 보장합니다.
 
-### `incident_categories`
-
-```text
-incident_id  BIGINT FK incidents.id NOT NULL
-category     VARCHAR NOT NULL
-PK (incident_id, category)
-```
-
-Category는 고정 Enum이므로 별도 Category 마스터 테이블을 만들지 않습니다.
+Category는 최근 단순화 결정에 따라 별도 테이블 없이 `incidents.categories` JSON 배열로 저장합니다.
 
 ### `incident_agencies`
 
@@ -90,6 +84,11 @@ agency_id    BIGINT FK agencies.id NOT NULL
 status       VARCHAR NOT NULL DEFAULT 'ASSIGNED'
 assigned_at  TIMESTAMPTZ NOT NULL
 updated_at   TIMESTAMPTZ NOT NULL
+received_at  TIMESTAMPTZ NULL
+dispatched_at TIMESTAMPTZ NULL
+arrived_at   TIMESTAMPTZ NULL
+in_progress_at TIMESTAMPTZ NULL
+completed_at TIMESTAMPTZ NULL
 UNIQUE (incident_id, agency_id)
 ```
 
@@ -101,13 +100,14 @@ UNIQUE (incident_id, agency_id)
 id             BIGINT PK
 incident_id    BIGINT FK incidents.id NOT NULL
 actor_user_id  BIGINT FK users.id NULL
+agency_id      BIGINT FK agencies.id NULL
 type           VARCHAR NOT NULL
 message        TEXT NOT NULL
 metadata       JSONB NOT NULL DEFAULT '{}'
 occurred_at    TIMESTAMPTZ NOT NULL
 ```
 
-시스템이 생성한 이벤트는 `actor_user_id`가 `NULL`입니다. `metadata`는 이벤트별 부가 정보만 저장하고 현재 상태는 `incidents`와 `incident_agencies`를 기준으로 조회합니다.
+시스템이 생성한 이벤트는 `actor_user_id`가 `NULL`입니다. 특정 기관이 없는 신고 접수·Incident 생성 이벤트는 `agency_id`가 `NULL`입니다. `metadata`는 이벤트별 부가 정보만 저장하고 현재 상태는 `incidents`와 `incident_agencies`를 기준으로 조회합니다.
 
 ```json
 {

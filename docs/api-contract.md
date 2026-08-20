@@ -64,9 +64,10 @@ GET  /auth/me
 | `latitude` | 예 |
 | `longitude` | 예 |
 | `image` | 아니오 |
-| `categoryHint` | 아니오 |
+| `categories` | 예 (같은 필드 반복으로 복수 전달) |
+| `categoryHint` | 아니오 (기존 Frontend 호환용 단일 Category) |
 
-Backend는 한 요청에서 검증, Incident 생성, 분류, Severity 계산, 기관 배정까지 처리합니다.
+Backend는 한 요청에서 검증, 사용자가 선택한 Category 저장, Incident 생성, 기관 배정까지 처리합니다. MVP에서는 자동 분류를 수행하지 않으며 `severity`를 생략하면 `MEDIUM`을 사용합니다.
 
 ```json
 {
@@ -92,7 +93,7 @@ Backend는 한 요청에서 검증, Incident 생성, 분류, Severity 계산, �
 }
 ```
 
-자동 분류 결과와 `categoryHint`가 모두 없으면 저장하지 않고 `422`를 반환합니다.
+`categories`와 호환용 `categoryHint`가 모두 없으면 저장하지 않고 `422`를 반환합니다.
 
 ```json
 {

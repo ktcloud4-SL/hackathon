@@ -9,6 +9,9 @@ from app.services.sse import SSEBroker
 
 
 EVENT_NAME_BY_TYPE: dict[EventType, str] = {
+    EventType.REPORT_CREATED: "report-created",
+    EventType.INCIDENT_CREATED: "incident-created",
+    EventType.INCIDENT_CLASSIFIED: "incident-classified",
     EventType.AGENCY_ASSIGNED: "agency-assigned",
     EventType.AGENCY_STATUS_CHANGED: "agency-status-changed",
     EventType.SUPPORT_REQUESTED: "support-requested",

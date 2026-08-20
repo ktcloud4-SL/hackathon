@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = True
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
     sse_heartbeat_seconds: float = Field(default=15.0, gt=0)
+    database_url: str = "postgresql+asyncpg://onereport:onereport@localhost:5432/onereport"
 
     storage_bucket: str | None = None
     storage_prefix: str = "reports"
