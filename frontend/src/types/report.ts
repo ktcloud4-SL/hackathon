@@ -45,3 +45,22 @@ export interface CreateReportResponse {
     status: AgencyStatus;
   }>;
 }
+
+export interface MyReportItem {
+  id: number;
+  description: string;
+  address: string;
+  imageUrl: string | null;
+  createdAt: string;
+  incident: {
+    id: number;
+    status: IncidentStatus;
+    severity: Severity;
+    categories: Category[];
+  };
+}
+
+export interface MyReportsResponse {
+  items: MyReportItem[];
+  total: number;
+}

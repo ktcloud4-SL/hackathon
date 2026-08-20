@@ -26,6 +26,7 @@ import {
 import { CitizenHeader } from "../components/CitizenHeader";
 import {
   createMockIncidentDetail,
+  createMockIncidentFromReportItem,
   loadReportResult,
 } from "../mocks/citizenIncident";
 import type {
@@ -39,6 +40,7 @@ import type {
   Category,
   IncidentStatus,
   Severity,
+  MyReportItem,
 } from "../types/report";
 import "./citizen-flow.css";
 
@@ -97,6 +99,19 @@ function parseIncidentId() {
   const segment = window.location.pathname.split("/").filter(Boolean).at(-1);
   const incidentId = Number(segment);
   return Number.isFinite(incidentId) && incidentId > 0 ? incidentId : 42;
+}
+
+function loadSelectedReport(incidentId: number): MyReportItem | null {
+  const stored = sessionStorage.getItem("onereport:selected-report");
+  if (!stored) return null;
+
+  try {
+    const report = JSON.parse(stored) as MyReportItem;
+    return report.incident.id === incidentId ? report : null;
+  } catch {
+    sessionStorage.removeItem("onereport:selected-report");
+    return null;
+  }
 }
 
 function formatDateTime(value: string) {
@@ -182,10 +197,12 @@ function connectionContent(state: ConnectionState) {
 
 export function CitizenIncidentPage() {
   const incidentId = useMemo(parseIncidentId, []);
-  const [incident, setIncident] = useState<IncidentDetail>(() => ({
-    ...createMockIncidentDetail(loadReportResult()),
-    id: incidentId,
-  }));
+  const [incident, setIncident] = useState<IncidentDetail>(() => {
+    const selectedReport = loadSelectedReport(incidentId);
+    return selectedReport
+      ? createMockIncidentFromReportItem(selectedReport)
+      : { ...createMockIncidentDetail(loadReportResult()), id: incidentId };
+  });
   const [connection, setConnection] = useState<ConnectionState>("connecting");
 
   useEffect(() => {
@@ -295,7 +312,7 @@ export function CitizenIncidentPage() {
 
       <main className="citizen-flow-main incident-main">
         <div className="flow-breadcrumb incident-breadcrumb">
-          <a href="/#my-reports"><ArrowLeft size={16} /> 내 신고</a>
+          <a href="/reports/me"><ArrowLeft size={16} /> 내 신고</a>
           <span>Incident #{incident.id}</span>
           <span className={`connection-badge connection-${connection}`}>
             <ConnectionIcon size={14} /> {connectionDetail.label}

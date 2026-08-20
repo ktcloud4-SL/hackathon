@@ -4,6 +4,7 @@ import type {
   Category,
   CreateReportInput,
   CreateReportResponse,
+  MyReportItem,
   Severity,
 } from "../types/report";
 
@@ -148,5 +149,56 @@ export function createMockIncidentDetail(
     timeline,
     createdAt,
     updatedAt: createdAt,
+  };
+}
+
+export function createMockIncidentFromReportItem(
+  item: MyReportItem,
+): IncidentDetail {
+  const agencyStatus = item.incident.status === "OPEN"
+    ? "ASSIGNED"
+    : item.incident.status === "RESPONDING"
+      ? "DISPATCHED"
+      : "COMPLETED";
+  const agencyTypes = Array.from(
+    new Set(item.incident.categories.flatMap((category) => categoryAgencies[category])),
+  );
+  const response: CreateReportResponse = {
+    report: {
+      id: item.id,
+      description: item.description,
+      address: item.address,
+      imageUrl: item.imageUrl,
+    },
+    incident: {
+      ...item.incident,
+      createdAt: item.createdAt,
+    },
+    agencies: agencyTypes.map((agencyType) => ({ agencyType, status: agencyStatus })),
+  };
+  const detail = createMockIncidentDetail(response);
+
+  if (item.incident.status === "OPEN") return detail;
+
+  const statusEvent: TimelineEvent = {
+    id: detail.timeline.length + 1,
+    type: item.incident.status === "RESPONDING"
+      ? "AGENCY_STATUS_CHANGED"
+      : item.incident.status === "RESOLVED"
+        ? "INCIDENT_RESOLVED"
+        : "INCIDENT_CLOSED",
+    message: item.incident.status === "RESPONDING"
+      ? "참여 기관이 신고를 접수하고 현장 대응을 시작했습니다."
+      : item.incident.status === "RESOLVED"
+        ? "모든 참여 기관의 현장 대응이 완료되었습니다."
+        : "관리자가 Incident 상황을 최종 종료했습니다.",
+    occurredAt: item.createdAt,
+    metadata: { incidentStatus: item.incident.status },
+  };
+
+  return {
+    ...detail,
+    status: item.incident.status,
+    timeline: [...detail.timeline, statusEvent],
   };
 }

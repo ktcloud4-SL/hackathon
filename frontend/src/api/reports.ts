@@ -1,4 +1,9 @@
-import type { CreateReportInput, CreateReportResponse } from "../types/report";
+import type {
+  CreateReportInput,
+  CreateReportResponse,
+  MyReportsResponse,
+} from "../types/report";
+import { requestJson } from "./http";
 
 export async function createReport(
   input: CreateReportInput,
@@ -25,4 +30,8 @@ export async function createReport(
   }
 
   return data as CreateReportResponse;
+}
+
+export function getMyReports(): Promise<MyReportsResponse> {
+  return requestJson<MyReportsResponse>("/api/reports/me");
 }
