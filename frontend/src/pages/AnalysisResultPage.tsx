@@ -149,7 +149,7 @@ export function AnalysisResultPage() {
 
             <div className="analysis-note">
               <FileSearch size={18} />
-              <p>입력한 설명의 키워드를 기준으로 분류한 결과입니다. 기관이 현장에서 실제 상황을 다시 확인합니다.</p>
+              <p>입력한 설명과 선택한 정보를 기준으로 분류한 결과입니다. 기관이 현장에서 실제 상황을 다시 확인합니다.</p>
             </div>
           </section>
 

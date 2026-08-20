@@ -6,6 +6,7 @@ import { CitizenIncidentPage } from "./pages/CitizenIncidentPage";
 import { AuthPage } from "./pages/AuthPage";
 import { MyReportsPage } from "./pages/MyReportsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { GuidePage } from "./pages/GuidePage";
 
 export default function App() {
   const { pathname } = window.location;
@@ -16,6 +17,10 @@ export default function App() {
 
   if (/^\/reports\/me\/?$/.test(pathname)) {
     return <MyReportsPage />;
+  }
+
+  if (/^\/guide\/?$/.test(pathname)) {
+    return <GuidePage />;
   }
 
   if (/^\/report\/analysis\/?$/.test(pathname)) {

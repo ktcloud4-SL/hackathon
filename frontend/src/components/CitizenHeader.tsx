@@ -56,7 +56,7 @@ export function CitizenHeader({ active }: CitizenHeaderProps) {
         <a className={active === "report" ? "active" : ""} href="/#report-form">
           신고하기
         </a>
-        <a className={active === "guide" ? "active" : ""} href="/#guide">
+        <a className={active === "guide" ? "active" : ""} href="/guide">
           이용안내
         </a>
         <a

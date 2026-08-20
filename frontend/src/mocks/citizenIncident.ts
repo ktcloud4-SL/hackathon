@@ -36,14 +36,10 @@ const agencyNames: Record<AgencyType, string> = {
   GAS: "가스안전",
 };
 
-function classify(description: string): Category[] {
-  const categories = categoryRules
+export function classifyMockCategories(description: string): Category[] {
+  return categoryRules
     .filter(({ keywords }) => keywords.some((keyword) => description.includes(keyword)))
     .map(({ category }) => category);
-
-  return categories.length > 0
-    ? categories
-    : ["TRAFFIC_ACCIDENT", "HUMAN_INJURY", "ELECTRIC_DAMAGE"];
 }
 
 function calculateSeverity(categories: Category[]): Severity {
@@ -58,7 +54,12 @@ export function createMockReportResult(
   const description =
     input?.description?.trim() ||
     "차량이 전봇대를 들이받았고 사람이 다쳤으며 전선에서 불꽃이 납니다.";
-  const categories = classify(description);
+  const classifiedCategories = classifyMockCategories(description);
+  const categories = classifiedCategories.length > 0
+    ? classifiedCategories
+    : input?.categoryHint
+      ? [input.categoryHint]
+      : [];
   const agencies = Array.from(
     new Set(categories.flatMap((category) => categoryAgencies[category])),
   );

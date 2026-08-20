@@ -14,10 +14,13 @@ import {
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { CitizenHeader } from "../components/CitizenHeader";
+import { CategoryHintModal } from "../components/CategoryHintModal";
 import {
+  classifyMockCategories,
   createMockReportResult,
   saveReportResult,
 } from "../mocks/citizenIncident";
+import type { Category } from "../types/report";
 
 interface Coordinates {
   latitude: number;
@@ -55,6 +58,8 @@ export function ReportPage() {
   const [addressQuery, setAddressQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAddresses = useMemo(() => {
@@ -122,6 +127,21 @@ export function ReportPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const completeMockAnalysis = (categoryHint?: Category) => {
+    if (!coordinates) return;
+    const result = createMockReportResult({
+      description: description.trim(),
+      address,
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      image: image ?? undefined,
+      categoryHint,
+    });
+
+    saveReportResult(result);
+    window.location.assign("/report/analysis");
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -135,16 +155,14 @@ export function ReportPage() {
       return;
     }
 
-    const result = createMockReportResult({
-      description: description.trim(),
-      address,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      image: image ?? undefined,
-    });
+    if (classifyMockCategories(description.trim()).length === 0) {
+      setSelectedCategory(null);
+      setIsCategoryModalOpen(true);
+      setNotice(null);
+      return;
+    }
 
-    saveReportResult(result);
-    window.location.assign("/report/analysis");
+    completeMockAnalysis();
   };
 
   return (
@@ -402,6 +420,18 @@ export function ReportPage() {
         <span>OneReport</span>
         <p>한 번의 신고, 여러 기관의 공동대응</p>
       </footer>
+
+      {isCategoryModalOpen && (
+        <CategoryHintModal
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onConfirm={() => {
+            if (!selectedCategory) return;
+            completeMockAnalysis(selectedCategory);
+          }}
+        />
+      )}
     </div>
   );
 }
