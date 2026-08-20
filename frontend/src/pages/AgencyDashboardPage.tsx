@@ -83,7 +83,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   FIRE: {
     type: "FIRE",
     slug: "fire",
-    name: "119",
+    name: "소방·구급 · 119",
     fullName: "소방청",
     centerName: "119 종합상황실",
     theme: "fire",
@@ -93,7 +93,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   KEPCO: {
     type: "KEPCO",
     slug: "kepco",
-    name: "한전",
+    name: "한국전력",
     fullName: "한국전력공사",
     centerName: "전력 재난상황실",
     theme: "kepco",
@@ -113,7 +113,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   GAS: {
     type: "GAS",
     slug: "gas",
-    name: "가스기관",
+    name: "가스안전",
     fullName: "가스안전기관",
     centerName: "가스 안전상황실",
     theme: "gas",

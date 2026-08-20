@@ -886,6 +886,7 @@
   line-height: 1.55;
   letter-spacing: -0.02em;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .detail-location {
@@ -1139,6 +1140,7 @@
 }
 
 .timeline-copy {
+  min-width: 0;
   padding: 1px 0 13px;
 }
 
@@ -1153,6 +1155,7 @@
   font-size: 9px;
   font-weight: 600;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .timeline-copy time {
@@ -1176,6 +1179,7 @@
   z-index: 100;
   display: grid;
   place-items: center;
+  overflow-y: auto;
   padding: 20px;
   background: rgba(10, 23, 17, 0.58);
   backdrop-filter: blur(5px);
