@@ -46,6 +46,7 @@ import {
 } from "../api/agency";
 import { ApiError } from "../api/http";
 import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
@@ -515,6 +516,11 @@ export function AgencyDashboardPage() {
                 <h3>{selectedIncident.report.description}</h3>
                 <p><MapPin size={14} />{selectedIncident.report.address}</p>
                 <div className="agency-category-list">{selectedIncident.categories.map((category) => <span key={category}>{categoryLabel[category]}</span>)}</div>
+                <IncidentPhoto
+                  imageUrl={selectedIncident.report.imageUrl}
+                  incidentId={selectedIncident.id}
+                  compact
+                />
               </div>
 
               <section className="my-response-card">

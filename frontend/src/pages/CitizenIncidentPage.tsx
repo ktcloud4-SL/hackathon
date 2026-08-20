@@ -25,6 +25,7 @@ import {
 import { getCurrentUser } from "../api/auth";
 import { ApiError } from "../api/http";
 import { CitizenHeader } from "../components/CitizenHeader";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type {
   IncidentDetail,
@@ -350,6 +351,11 @@ export function CitizenIncidentPage() {
               <div className="summary-categories">
                 {incident.categories.map((category) => <span key={category}>{categoryLabels[category]}</span>)}
               </div>
+              <IncidentPhoto
+                imageUrl={incident.report.imageUrl}
+                incidentId={incident.id}
+                compact
+              />
               <a href="/report/analysis">분석 결과 다시 보기 <ChevronRight size={16} /></a>
             </section>
 
