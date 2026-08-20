@@ -19,7 +19,11 @@ import { CitizenHeader } from "../components/CitizenHeader";
 import { CategoryHintModal } from "../components/CategoryHintModal";
 import { AiAnalysisModal } from "../components/AiAnalysisModal";
 import { saveReportResult } from "../state/reportResult";
-import type { Category, Severity } from "../types/report";
+import type {
+  Category,
+  ReportAnalysisResponse,
+  Severity,
+} from "../types/report";
 import {
   hasUsableRecommendation,
   withMinimumDuration,
@@ -65,6 +69,7 @@ export function ReportPage() {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [recommendedSeverity, setRecommendedSeverity] = useState<Severity>("MEDIUM");
   const [hasRecommendation, setHasRecommendation] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<ReportAnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +182,7 @@ export function ReportPage() {
     setSelectedCategories([]);
     setRecommendedSeverity("MEDIUM");
     setHasRecommendation(false);
+    setAnalysisResult(null);
     setIsAnalyzing(true);
     setNotice(null);
 
@@ -188,6 +194,7 @@ export function ReportPage() {
       setSelectedCategories(analysis.categories);
       setRecommendedSeverity(analysis.severity);
       setHasRecommendation(hasUsableRecommendation(analysis));
+      setAnalysisResult(analysis);
       if (!hasCategories || analysis.needsUserConfirmation) {
         setNotice("자동으로 사고 유형을 분류하지 못했습니다. 유형을 직접 선택해 주세요.");
       }
@@ -475,6 +482,7 @@ export function ReportPage() {
         <CategoryHintModal
           selected={selectedCategories}
           hasRecommendation={hasRecommendation}
+          analysis={analysisResult}
           onToggle={(category) => setSelectedCategories((current) =>
             current.includes(category)
               ? current.filter((item) => item !== category)

@@ -24,8 +24,8 @@ export function AiAnalysisModal() {
         <span className="ai-analysis-spinner" aria-hidden="true">
           <LoaderCircle size={48} strokeWidth={2.4} />
         </span>
-        <h2 id="ai-analysis-title">AI가 신고 내용을 분석 중입니다</h2>
-        <p>잠시만 기다려 주세요.</p>
+        <h2 id="ai-analysis-title">신고 내용을 분석하고 있어요</h2>
+        <p>상황에 필요한 대응기관을 확인하고 있어요.</p>
       </section>
     </div>
   );
