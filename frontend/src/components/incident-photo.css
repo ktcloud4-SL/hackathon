@@ -1,0 +1,131 @@
+.incident-photo {
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 16px;
+  background: #f8faf8;
+}
+
+.incident-photo__heading {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  color: #56645d;
+  border-bottom: 1px solid #e3e9e5;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.incident-photo__heading > span,
+.incident-photo__heading > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.incident-photo__heading > span svg {
+  color: #187153;
+}
+
+.incident-photo__heading > a {
+  color: #187153;
+  text-decoration: none;
+  font-size: 10px;
+}
+
+.incident-photo__frame {
+  position: relative;
+  display: block;
+  max-height: 380px;
+  overflow: hidden;
+  background: #e7ece9;
+}
+
+.incident-photo__frame img {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  max-height: 380px;
+  object-fit: cover;
+}
+
+.incident-photo__frame > span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 6px 9px;
+  color: #fff;
+  border-radius: 8px;
+  background: rgba(20, 34, 27, 0.72);
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.incident-photo__frame:hover > span,
+.incident-photo__frame:focus-visible > span {
+  opacity: 1;
+}
+
+.incident-photo--compact {
+  margin-top: 15px;
+  border-radius: 13px;
+}
+
+.incident-photo--compact .incident-photo__heading {
+  min-height: 36px;
+  padding: 0 11px;
+  font-size: 9px;
+}
+
+.incident-photo--compact .incident-photo__heading > a {
+  font-size: 8px;
+}
+
+.incident-photo--compact .incident-photo__frame,
+.incident-photo--compact .incident-photo__frame img {
+  max-height: 250px;
+}
+
+.incident-photo--compact .incident-photo__frame img {
+  min-height: 125px;
+}
+
+.incident-photo__empty {
+  display: flex;
+  min-height: 105px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px;
+  color: #7d8982;
+  text-align: center;
+  font-size: 10px;
+}
+
+.incident-photo__empty svg {
+  color: #9ca7a1;
+}
+
+.incident-photo__empty small {
+  color: #98a19c;
+  font-size: 8px;
+}
+
+@media (max-width: 640px) {
+  .incident-photo__frame img {
+    min-height: 150px;
+    max-height: 300px;
+  }
+
+  .incident-photo__heading {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+}

@@ -17,6 +17,22 @@ export type AgencyStatus =
 export type IncidentStatus = "OPEN" | "RESPONDING" | "RESOLVED" | "CLOSED";
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+export interface ReportAnalysisInput {
+  description: string;
+  address: string;
+}
+
+export interface ReportAnalysisResponse {
+  categories: Category[];
+  severity: Severity;
+  suggestedAgencies: AgencyType[];
+  summary: string;
+  confidence: number;
+  reasons: string[];
+  needsUserConfirmation: boolean;
+  analysisMethod: "RULE";
+}
+
 export interface CreateReportInput {
   description: string;
   address: string;
@@ -24,6 +40,7 @@ export interface CreateReportInput {
   longitude: number;
   image?: File;
   categories: Category[];
+  severity: Severity;
 }
 
 export interface CreateReportResponse {

@@ -12,9 +12,9 @@
 
 .guide-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) 260px;
   align-items: center;
-  gap: 50px;
+  gap: 36px;
   overflow: hidden;
   min-height: 470px;
   padding: 58px 62px;
@@ -38,12 +38,18 @@
 .guide-hero h1 {
   margin: 17px 0 14px;
   font-family: "Manrope", "Noto Sans KR", sans-serif;
-  font-size: clamp(34px, 4.8vw, 53px);
+  font-size: clamp(34px, 3.5vw, 38px);
   line-height: 1.23;
   letter-spacing: -0.06em;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
-.guide-hero h1 span {
+.guide-hero h1 > span {
+  display: block;
+}
+
+.guide-hero h1 > span:not(.guide-hero-question) {
   color: #a9e2c8;
 }
 
@@ -85,7 +91,7 @@
 .guide-hero-visual {
   position: relative;
   display: grid;
-  min-height: 340px;
+  min-height: 300px;
   place-items: center;
 }
 
@@ -95,8 +101,8 @@
   border-radius: 50%;
 }
 
-.ring-one { width: 320px; height: 320px; }
-.ring-two { width: 210px; height: 210px; }
+.ring-one { width: 270px; height: 270px; }
+.ring-two { width: 180px; height: 180px; }
 
 .guide-center-node {
   position: relative;
@@ -426,7 +432,7 @@
 .guide-cta p { margin: 3px 0 0; color: #77837c; font-size: 9px; }
 .guide-cta a { color: #fff; background: var(--green); }
 
-@media (max-width: 900px) {
+@media (max-width: 1050px) {
   .guide-hero { grid-template-columns: 1fr; }
   .guide-hero-visual { display: none; }
   .guide-scope-section, .guide-status-section { grid-template-columns: 1fr; }

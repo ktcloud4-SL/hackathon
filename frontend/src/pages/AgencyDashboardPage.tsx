@@ -46,6 +46,7 @@ import {
 } from "../api/agency";
 import { ApiError } from "../api/http";
 import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
@@ -82,7 +83,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   FIRE: {
     type: "FIRE",
     slug: "fire",
-    name: "119",
+    name: "소방·구급 · 119",
     fullName: "소방청",
     centerName: "119 종합상황실",
     theme: "fire",
@@ -92,7 +93,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   KEPCO: {
     type: "KEPCO",
     slug: "kepco",
-    name: "한전",
+    name: "한국전력",
     fullName: "한국전력공사",
     centerName: "전력 재난상황실",
     theme: "kepco",
@@ -112,7 +113,7 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
   GAS: {
     type: "GAS",
     slug: "gas",
-    name: "가스기관",
+    name: "가스안전",
     fullName: "가스안전기관",
     centerName: "가스 안전상황실",
     theme: "gas",
@@ -515,6 +516,11 @@ export function AgencyDashboardPage() {
                 <h3>{selectedIncident.report.description}</h3>
                 <p><MapPin size={14} />{selectedIncident.report.address}</p>
                 <div className="agency-category-list">{selectedIncident.categories.map((category) => <span key={category}>{categoryLabel[category]}</span>)}</div>
+                <IncidentPhoto
+                  imageUrl={selectedIncident.report.imageUrl}
+                  incidentId={selectedIncident.id}
+                  compact
+                />
               </div>
 
               <section className="my-response-card">

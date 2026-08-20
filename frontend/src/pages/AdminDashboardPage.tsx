@@ -40,6 +40,7 @@ import {
 } from "../api/auth";
 import { ApiError } from "../api/http";
 import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
@@ -67,10 +68,10 @@ const incidentStatusLabel: Record<IncidentStatus, string> = {
 
 const agencyLabel: Record<AgencyType, string> = {
   POLICE: "경찰",
-  FIRE: "119",
-  KEPCO: "한전",
+  FIRE: "소방·구급 · 119",
+  KEPCO: "한국전력",
   ROAD: "도로관리",
-  GAS: "가스기관",
+  GAS: "가스안전",
 };
 
 const agencyStatusLabel: Record<AgencyStatus, string> = {
@@ -559,6 +560,11 @@ export function AdminDashboardPage() {
                     <span key={category}>{categoryLabel[category]}</span>
                   ))}
                 </div>
+                <IncidentPhoto
+                  imageUrl={selectedIncident.report.imageUrl}
+                  incidentId={selectedIncident.id}
+                  compact
+                />
               </div>
 
               <div className="admin-actions-card">
