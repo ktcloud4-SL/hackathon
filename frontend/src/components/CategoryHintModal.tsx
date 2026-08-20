@@ -129,7 +129,7 @@ export function CategoryHintModal({
           <div>
             <span className="category-modal-icon"><ShieldAlert size={22} /></span>
             <div>
-              <span>{hasRecommendation ? "신고 내용 분석 결과" : "사고 유형 확인 필요"}</span>
+              <span>{hasRecommendation ? "AI 분석 결과" : "사고 유형 확인 필요"}</span>
               <h2 id="category-modal-title">
                 {hasRecommendation
                   ? "추천 사고 유형을 확인해 주세요."
@@ -141,7 +141,7 @@ export function CategoryHintModal({
         </header>
 
         {highlights ? (
-          <section className="analysis-highlights" aria-label="상황 분석 요약">
+          <section className="analysis-highlights" aria-label="AI 상황 분석 결과">
             <div className="analysis-highlight-summary">
               <div>
                 <span>상황 분석 요약</span>
@@ -154,7 +154,7 @@ export function CategoryHintModal({
 
             {highlights.suggestedAgencies.length > 0 && (
               <div className="analysis-highlight-row">
-                <strong><Building2 size={15} />상황에 필요한 대응기관</strong>
+                <strong><Building2 size={15} />예상 대응기관</strong>
                 <div className="analysis-agency-list">
                   {highlights.suggestedAgencies.map((agency) => (
                     <span key={agency}>{agencyLabels[agency]}</span>
@@ -165,7 +165,7 @@ export function CategoryHintModal({
 
             {highlights.reasons.length > 0 && (
               <div className="analysis-highlight-row analysis-reasons">
-                <strong><CircleAlert size={15} />분석 근거</strong>
+                <strong><CircleAlert size={15} />분석된 위험 요소</strong>
                 <ul>
                   {highlights.reasons.map((reason) => <li key={reason}>{reason}</li>)}
                 </ul>
@@ -180,7 +180,7 @@ export function CategoryHintModal({
 
         {hasRecommendation && (
           <p className="category-modal-description category-recommendation-guide">
-            추천 결과를 확인하고 필요하면 사고 유형을 수정한 뒤 접수해 주세요.
+            분석 결과를 확인하고 필요하면 사고 유형을 수정해 주세요.
           </p>
         )}
 
