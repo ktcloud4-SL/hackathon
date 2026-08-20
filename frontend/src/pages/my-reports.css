@@ -1,8 +1,26 @@
 .my-reports-shell {
   min-height: 100vh;
+  font-size: 21px;
   background:
     radial-gradient(circle at 88% 4%, rgba(210, 237, 222, 0.65), transparent 26rem),
     linear-gradient(180deg, #f8faf7, #f3f6f2);
+}
+
+.my-reports-shell .brand {
+  font-size: 25px;
+}
+
+.my-reports-shell .desktop-nav,
+.my-reports-shell .text-button {
+  font-size: 19px;
+}
+
+.my-reports-shell .header-user-name {
+  font-size: 17px;
+}
+
+.my-reports-shell .logout-button {
+  font-size: 15px;
 }
 
 .my-reports-main {
@@ -23,20 +41,20 @@
   margin-bottom: 5px;
   color: var(--green);
   font-family: "Manrope", sans-serif;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .my-reports-hero h1 {
   margin: 0;
   color: #18251f;
-  font-size: clamp(32px, 4vw, 44px);
+  font-size: clamp(37px, calc(4vw + 5px), 49px);
   letter-spacing: -0.055em;
 }
 
 .my-reports-hero p {
   margin: 8px 0 0;
   color: #738078;
-  font-size: 13px;
+  font-size: 18px;
 }
 
 .my-reports-hero > a {
@@ -49,7 +67,7 @@
   border-radius: 11px;
   background: var(--green);
   box-shadow: 0 10px 24px rgba(14, 107, 78, 0.15);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -78,20 +96,20 @@
   display: block;
   margin-bottom: 1px;
   color: #7a857e;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .report-summary-strip > div strong {
   color: #2b3931;
   font-family: "Manrope", sans-serif;
-  font-size: 24px;
+  font-size: 29px;
 }
 
 .report-summary-strip > div small {
   margin-left: 3px;
   color: #8c9590;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .report-summary-strip > div.active strong {
@@ -109,7 +127,7 @@
   gap: 7px;
   margin: 0;
   color: #849089;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .report-summary-strip > p svg {
@@ -140,7 +158,7 @@
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -154,7 +172,7 @@
   border-radius: 6px;
   background: #e9eeea;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .report-filter-tabs button.active {
@@ -188,7 +206,7 @@
   outline: 0;
   color: #334139;
   background: transparent;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .reports-demo-note {
@@ -201,7 +219,7 @@
   border: 1px solid #ecd9bc;
   border-radius: 10px;
   background: #fff9ef;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .my-report-list {
@@ -281,7 +299,7 @@
   display: block;
   color: #969e99;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -289,14 +307,14 @@
   display: block;
   margin-top: 1px;
   color: #27342d;
-  font-size: 13px;
+  font-size: 18px;
 }
 
 .report-card-heading small {
   display: block;
   margin-top: 2px;
   color: #8a948e;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .report-severity {
@@ -304,7 +322,7 @@
   color: #715f3c;
   border-radius: 7px;
   background: #f6f1e7;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -322,7 +340,7 @@
   overflow: hidden;
   margin: 12px 0 8px;
   color: #526058;
-  font-size: 10px;
+  font-size: 15px;
   line-height: 1.5;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -340,7 +358,7 @@
   border: 1px solid #e0e6e1;
   border-radius: 6px;
   background: #fafbfa;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -348,7 +366,7 @@
   display: grid;
   gap: 9px;
   color: #77837c;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .report-card-meta span {
@@ -367,7 +385,7 @@
   align-items: center;
   gap: 2px;
   color: #167452;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -417,14 +435,14 @@
 .reports-error strong {
   margin-top: 13px;
   color: #39463f;
-  font-size: 13px;
+  font-size: 18px;
 }
 
 .reports-empty p,
 .reports-error p {
   margin: 5px 0 0;
   color: #8d9691;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .reports-error button {
@@ -434,7 +452,7 @@
   border: 0;
   border-radius: 8px;
   background: var(--green);
-  font-size: 9px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -470,14 +488,14 @@
 .report-help-card p {
   margin: 0;
   color: #758078;
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .report-help-card p strong {
   display: block;
   color: #35443b;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .report-help-card > a {
@@ -486,7 +504,7 @@
   gap: 6px;
   flex: 0 0 auto;
   color: #126d4d;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
 }
 
