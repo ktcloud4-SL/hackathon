@@ -26,6 +26,8 @@ TimelineEvent = 주요 변경 기록
 
 MVP에서는 Report 1건당 Incident 1건을 생성하며 모든 ID는 숫자형 `BIGINT`로 통일합니다.
 
+세부 필드와 FK 제약은 [ERD](erd.md)를 기준으로 합니다.
+
 ## Category와 Agency
 
 ```text
