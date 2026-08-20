@@ -1,6 +1,6 @@
 # OneReport API 계약 v1.1
 
-해커톤 MVP의 Frontend–Backend REST 계약입니다. 제품 범위는 [MVP 명세](mvp-spec.md), 실시간 이벤트는 [SSE 계약](sse-events.md)을 기준으로 합니다.
+해커톤 MVP의 Frontend–Backend REST 계약입니다. 제품 범위는 [MVP 명세](mvp-spec.md), 데이터 구조는 [ERD](erd.md), 실시간 이벤트는 [SSE 계약](sse-events.md)을 기준으로 합니다.
 
 ## 공통
 
@@ -8,6 +8,8 @@
 - 인증: JWT `HttpOnly` Cookie
 - ID: PostgreSQL `BIGSERIAL/BIGINT` 숫자형
 - 시간: ISO 8601
+
+목록 API는 `{ "items": [...], "total": 0 }` 형식을 사용하고 기본 정렬은 `createdAt DESC`입니다. MVP에서는 페이지네이션을 적용하지 않습니다.
 
 ```text
 AgencyType: POLICE | FIRE | KEPCO | ROAD | GAS
@@ -103,6 +105,27 @@ Backend는 한 요청에서 검증, Incident 생성, 분류, Severity 계산, �
 
 현재 시민의 신고 목록을 반환합니다.
 
+```json
+{
+  "items": [
+    {
+      "id": 101,
+      "description": "차량이 전봇대를 들이받았습니다.",
+      "address": "서울시 강남구 테헤란로 1",
+      "imageUrl": "https://bucket.example/reports/101.jpg",
+      "createdAt": "2026-08-20T17:01:00+09:00",
+      "incident": {
+        "id": 42,
+        "status": "RESPONDING",
+        "severity": "CRITICAL",
+        "categories": ["TRAFFIC_ACCIDENT", "HUMAN_INJURY"]
+      }
+    }
+  ],
+  "total": 1
+}
+```
+
 ## Incident 조회
 
 ```text
@@ -123,6 +146,27 @@ Incident 상세 응답에는 신고, Category, Severity, 참여 기관 상태, T
 ### `GET /agencies/me/incidents`
 
 현재 기관에 배정된 Incident 목록입니다. 신규 Incident 확인을 위해 Frontend가 3~5초 간격으로 polling합니다.
+
+선택 Query는 `incidentStatus`, `agencyStatus`, `severity`입니다.
+
+```json
+{
+  "items": [
+    {
+      "id": 42,
+      "incidentStatus": "RESPONDING",
+      "agencyStatus": "DISPATCHED",
+      "severity": "CRITICAL",
+      "categories": ["TRAFFIC_ACCIDENT", "HUMAN_INJURY"],
+      "description": "차량이 전봇대를 들이받았습니다.",
+      "address": "서울시 강남구 테헤란로 1",
+      "assignedAt": "2026-08-20T17:01:00+09:00",
+      "updatedAt": "2026-08-20T17:04:00+09:00"
+    }
+  ],
+  "total": 1
+}
+```
 
 ### `PATCH /incidents/{incidentId}/agencies/{agencyType}/status`
 
@@ -167,14 +211,40 @@ ASSIGNED → DISPATCHED
 
 ## 관리자
 
+### `GET /incidents`
+
+전체 목록은 3~5초 polling하며 선택 Query는 `incidentStatus`, `severity`입니다.
+
+```json
+{
+  "items": [
+    {
+      "id": 42,
+      "status": "RESPONDING",
+      "severity": "CRITICAL",
+      "categories": ["TRAFFIC_ACCIDENT", "HUMAN_INJURY"],
+      "report": {
+        "description": "차량이 전봇대를 들이받았습니다.",
+        "address": "서울시 강남구 테헤란로 1"
+      },
+      "agencies": [
+        { "agencyType": "POLICE", "status": "ARRIVED" },
+        { "agencyType": "FIRE", "status": "DISPATCHED" }
+      ],
+      "createdAt": "2026-08-20T17:01:00+09:00",
+      "updatedAt": "2026-08-20T17:04:00+09:00"
+    }
+  ],
+  "total": 1
+}
+```
+
 ```text
-GET   /incidents
 PATCH /incidents/{incidentId}/severity
 POST  /incidents/{incidentId}/agencies
 PATCH /incidents/{incidentId}/close
 ```
 
-- 전체 목록은 3~5초 polling합니다.
 - 수동 추가 기관은 `ASSIGNED`로 시작합니다.
 - `RESOLVED` Incident만 `CLOSED`로 변경할 수 있습니다.
 

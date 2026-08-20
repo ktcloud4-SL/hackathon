@@ -26,5 +26,6 @@ MVP는 실제 112·119·전력기관 시스템에 신고를 전달하지 않습�
 
 - [Contributing](CONTRIBUTING.md)
 - [MVP Specification](docs/mvp-spec.md)
+- [ERD](docs/erd.md)
 - [API Contract](docs/api-contract.md)
 - [SSE Events](docs/sse-events.md)
