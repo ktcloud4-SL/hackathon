@@ -34,7 +34,7 @@ docs/api-contract
 ```text
 feat(report): 신고 생성 시 Incident 생성
 fix(agency): 기관 상태 전이 검증 수정
-infra(nginx): WebSocket proxy 설정 추가
+infra(nginx): SSE proxy buffering 비활성화
 docs: API 계약 문서 갱신
 ```
 
@@ -45,15 +45,15 @@ docs: API 계약 문서 갱신
 1. 기능 단위로 Pull Request를 만듭니다.
 2. 자동으로 표시되는 PR 템플릿을 작성합니다.
 3. 로컬 실행 또는 Docker Compose 실행으로 변경 사항을 확인합니다.
-4. API, WebSocket, 환경변수 변경이 있다면 관련 문서를 함께 갱신합니다.
+4. API, SSE, 환경변수 변경이 있다면 관련 문서를 함께 갱신합니다.
 5. 작성자는 검증을 마친 뒤 직접 Squash merge할 수 있습니다.
 
 PR 제목 예시:
 
 ```text
 [BE] 신고 생성 및 자동 기관 배정
-[FE] 시민 Incident 실시간 상황 화면
-[OPS] Nginx WebSocket proxy 설정
+[FE] 시민 Incident SSE 상황 화면
+[OPS] Nginx SSE buffering 비활성화
 ```
 
 ## main 브랜치
@@ -62,9 +62,9 @@ PR 제목 예시:
 - 모든 변경은 Pull Request를 통해 반영합니다.
 - Pull Request는 Squash merge만 사용합니다.
 - merge 후 원격 기능 브랜치는 자동 삭제됩니다.
-- `docker-compose.yml`, `.env.example`, `infra/`, `.github/workflows/`, API/WebSocket 계약, DB migration 변경은 팀 채팅에 공유합니다.
+- `docker-compose.yml`, `.env.example`, `infra/`, `.github/workflows/`, API/SSE 계약, DB migration 변경은 팀 채팅에 공유합니다.
 
 ## 소통
 
 - 15분 이상 막힌 작업은 팀 채팅에 즉시 공유합니다.
-- 다른 담당자에게 영향을 주는 API·DB·WebSocket 형식 변경은 구현 전에 공유합니다.
+- 다른 담당자에게 영향을 주는 API·DB·SSE 형식 변경은 구현 전에 공유합니다.
