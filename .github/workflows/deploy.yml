@@ -1,0 +1,76 @@
+name: Deploy OneReport to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "infra/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          target: "/opt/onereport"
+          overwrite: true
+          strip_components: 0
+
+      - name: Deploy containers with Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/onereport
+
+            # Prepare .env file
+            cat <<EOF > .env
+            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'onereport' }}
+            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER || 'postgres' }}:${{ secrets.POSTGRES_PASSWORD || 'postgres' }}@postgres:5432/${{ secrets.POSTGRES_DB || 'onereport' }}
+            JWT_SECRET=${{ secrets.JWT_SECRET || 'onereport-super-secret-jwt-key' }}
+            JWT_ALGORITHM=HS256
+            ACCESS_TOKEN_EXPIRE_MINUTES=1440
+            AWS_REGION=${{ secrets.AWS_REGION || 'ap-northeast-2' }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME || 'onereport-uploads-788246d2' }}
+            EOF
+
+            echo "Building and launching containers..."
+            docker compose up -d --build --remove-orphans
+
+            echo "Cleaning up dangling images..."
+            docker image prune -f || true
+
+      - name: Verify Backend Health
+        run: |
+          echo "Waiting for service to stabilize..."
+          sleep 5
+          for i in {1..10}; do
+            echo "Checking http://${{ secrets.EC2_HOST }}/api/health (Attempt $i)..."
+            if curl -s -f "http://${{ secrets.EC2_HOST }}/api/health" | grep "ok"; then
+              echo "Health check passed!"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Health check failed!"
+          exit 1
