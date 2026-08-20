@@ -99,7 +99,7 @@ jobs:
 
           echo "1. Checking Frontend (HTTP 200)..."
           for i in {1..10}; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST }}/")
+            HTTP_STATUS=$(curl -sL -k -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST }}/")
             if [ "$HTTP_STATUS" -eq 200 ]; then
               echo "Frontend is online! (Status: $HTTP_STATUS)"
               break
@@ -110,7 +110,7 @@ jobs:
 
           echo "2. Checking Backend API Health..."
           for i in {1..10}; do
-            HEALTH=$(curl -s "http://${{ secrets.EC2_HOST }}/api/health")
+            HEALTH=$(curl -sL -k "http://${{ secrets.EC2_HOST }}/api/health")
             if echo "$HEALTH" | grep -q "ok"; then
               echo "Backend API is healthy! ($HEALTH)"
               exit 0
