@@ -106,11 +106,11 @@ export function AuthPage() {
           <div className="auth-story-content">
             <span className="auth-story-badge"><ShieldCheck size={16} /> 시민 안전 공동대응</span>
             <h1>
-              한 번의 신고가<br />
-              <span>필요한 모든 기관</span>에<br />
+              어디에 신고할지 몰라도<br />
+              <span>상황에 필요한 기관</span>으로<br />
               연결됩니다.
             </h1>
-            <p>신고부터 현장 대응 완료까지, 기관별 진행 상황을 한 화면에서 확인하세요.</p>
+            <p>상황과 위치를 한 번 전달하고, 필요한 기관의 공동대응 과정을 한 화면에서 확인하세요.</p>
 
             <div className="auth-route-visual" aria-hidden="true">
               <div className="auth-citizen-node"><UserRound size={24} /><span>시민 신고</span></div>

@@ -320,11 +320,11 @@
   font-weight: 800;
 }
 
-.guide-scope-cards .scope-does-not > span { color: #a05c31; }
+.guide-scope-cards .scope-future > span { color: #6a5993; }
 .guide-scope-cards ul { display: grid; gap: 10px; margin: 17px 0 0; padding: 0; list-style: none; }
 .guide-scope-cards li { position: relative; padding-left: 12px; color: #647168; font-size: 9px; line-height: 1.5; }
 .guide-scope-cards li::before { content: ""; position: absolute; top: 5px; left: 0; width: 4px; height: 4px; border-radius: 50%; background: #66a78d; }
-.scope-does-not li::before { background: #d4a17e; }
+.scope-future li::before { background: #9b8bc4; }
 
 .guide-section-heading.inline {
   display: flex;
@@ -361,6 +361,15 @@
 .guide-agency-grid .gas .guide-agency-symbol { background: #7967a5; }
 .guide-agency-grid strong { display: block; color: #334039; font-size: 11px; }
 .guide-agency-grid small { display: block; margin-top: 2px; color: #8a948e; font-size: 7px; }
+
+.guide-agency-expansion {
+  margin: 15px 0 0;
+  color: #7b867f;
+  font-size: 9px;
+  text-align: right;
+}
+
+.guide-agency-expansion strong { margin-right: 7px; color: var(--green); }
 
 .guide-status-section {
   display: grid;
@@ -433,6 +442,7 @@
   .guide-section-heading.inline { align-items: flex-start; flex-direction: column; }
   .guide-section-heading.inline p { text-align: left; }
   .guide-agency-grid { grid-template-columns: repeat(2, 1fr); }
+  .guide-agency-expansion { text-align: left; }
   .guide-status-section { padding: 30px 22px; }
   .guide-status-flow { overflow-x: auto; min-width: 540px; padding-bottom: 8px; }
   .guide-status-section { overflow: hidden; }

@@ -25,20 +25,20 @@ import "./guide-page.css";
 const responseSteps = [
   {
     number: "01",
-    title: "상황과 위치 신고",
-    copy: "사고 유형을 정확히 몰라도 보이는 상황과 위치를 입력하면 됩니다.",
+    title: "상황과 위치 전달",
+    copy: "담당 기관을 몰라도 지금 보이는 상황과 위치를 중심으로 알려주면 됩니다.",
     icon: MapPin,
   },
   {
     number: "02",
-    title: "사고 유형 선택·기관 배정",
-    copy: "신고 내용을 복수 사고 유형으로 분류하고 필요한 기관을 함께 배정합니다.",
+    title: "상황 분석·유형 판단",
+    copy: "신고 내용을 분석해 상황의 유형과 긴급도를 판단하고 필요한 대응을 정리합니다.",
     icon: Sparkles,
   },
   {
     number: "03",
-    title: "대응 상황 실시간 확인",
-    copy: "기관별 접수·출동·도착·대응 완료 상태를 하나의 Timeline으로 확인합니다.",
+    title: "필요 기관 연결·공동대응",
+    copy: "한 곳 또는 여러 기관을 하나의 Incident로 연결하고 대응 과정을 Timeline으로 공유합니다.",
     icon: Radio,
   },
 ];
@@ -62,8 +62,8 @@ export function GuidePage() {
         <section className="guide-hero">
           <div className="guide-hero-copy">
             <span className="guide-eyebrow"><BadgeCheck size={16} /> OneReport 이용안내</span>
-            <h1>한 번의 신고로,<br /><span>필요한 기관이 함께 움직입니다.</span></h1>
-            <p>복합사고를 하나의 Incident로 관리해 시민과 참여 기관이 같은 대응 상황을 공유하는 공동대응 서비스입니다.</p>
+            <h1>어디에 신고할지<br />고민하지 마세요.<br /><span>한 번의 신고를 필요한 기관에 연결합니다.</span></h1>
+            <p>OneReport는 상황과 위치를 분석해 필요한 공공기관·공기업·지자체·민원 채널을 찾고, 복합 상황은 하나의 Incident로 연결하는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
             <div className="guide-hero-actions">
               <a href="/#report-form">지금 신고하기 <ArrowRight size={18} /></a>
               <a className="secondary" href="/reports/me">내 신고 확인</a>
@@ -111,27 +111,27 @@ export function GuidePage() {
             <span className="guide-section-icon"><Building2 size={21} /></span>
             <span className="guide-small-title">서비스 범위</span>
             <h2>OneReport는 기관을 대체하지 않고<br />공동대응을 연결합니다.</h2>
-            <p>해커톤 MVP 시연 시스템이므로 실제 긴급기관 시스템으로 신고가 전달되지는 않습니다.</p>
+            <p>현재 OneReport는 서비스 시연 환경으로, 실제 기관으로 신고가 접수되지는 않습니다.</p>
             <div className="emergency-number-callout"><CircleAlert size={19} /><span><strong>생명이 위험하면 즉시 112·119</strong>OneReport 화면을 기다리지 말고 먼저 전화하세요.</span></div>
           </div>
 
           <div className="guide-scope-cards">
             <article className="scope-does">
-              <span><Check size={17} /> 제공하는 기능</span>
+              <span><Check size={17} /> 현재 시연 범위</span>
               <ul>
-                <li>복합사고를 하나의 Incident로 관리</li>
-                <li>필요한 복수 기관 자동 배정</li>
-                <li>기관별 대응 상태와 Timeline 공유</li>
+                <li>복합 상황을 하나의 Incident로 관리</li>
+                <li>상황에 따른 필요 기관 배정</li>
+                <li>기관별 대응 상태·Timeline 공유</li>
                 <li>추가 기관 지원 요청 기록</li>
               </ul>
             </article>
-            <article className="scope-does-not">
-              <span><CircleAlert size={17} /> 제공하지 않는 기능</span>
+            <article className="scope-future">
+              <span><Sparkles size={17} /> 향후 연동 범위</span>
               <ul>
-                <li>실제 112·119 신고 접수</li>
-                <li>기관 내부 출동 시스템 대체</li>
-                <li>응급 의료 또는 안전 판단</li>
-                <li>기관 출동 시간 보장</li>
+                <li>실제 112·119 신고 시스템</li>
+                <li>지자체·공공기관 민원 시스템</li>
+                <li>공기업·생활 인프라 시스템</li>
+                <li>출동 ETA·공공 안전 데이터·IoT</li>
               </ul>
             </article>
           </div>
@@ -139,8 +139,8 @@ export function GuidePage() {
 
         <section className="guide-section guide-agencies" aria-labelledby="guide-agencies-title">
           <div className="guide-section-heading inline">
-            <div><span>JOINT RESPONSE</span><h2 id="guide-agencies-title">다섯 기관이 함께 대응해요.</h2></div>
-            <p>사고 유형에 따라 필요한 기관만 중복 없이 배정됩니다.</p>
+            <div><span>JOINT RESPONSE</span><h2 id="guide-agencies-title">상황에 맞는 기관으로 자동 연결해요.</h2></div>
+            <p>아래는 현재 시연에서 연결되는 대표 기관이며, 상황에 필요한 기관만 배정됩니다.</p>
           </div>
           <div className="guide-agency-grid">
             {agencies.map((agency) => {
@@ -154,6 +154,7 @@ export function GuidePage() {
               );
             })}
           </div>
+          <p className="guide-agency-expansion"><strong>확장 방향</strong> 지자체 · 상하수도 · 환경 · 생활민원 등 다양한 공공 서비스 채널</p>
         </section>
 
         <section className="guide-status-section">

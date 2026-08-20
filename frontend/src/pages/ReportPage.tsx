@@ -189,15 +189,15 @@ export function ReportPage() {
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="eyebrow-icon"><ShieldCheck size={16} /></span>
-              시민 긴급 신고
+              통합 신고 · 공동대응
             </div>
             <h1 id="report-title">
-              한 번의 신고로,<br />
-              <span>필요한 기관이 함께 대응해요.</span>
+              어디에 신고할지 고민하지 마세요.<br />
+              <span>한 번의 신고를 필요한 기관에 연결해요.</span>
             </h1>
             <p>
-              정확한 사고 유형을 몰라도 괜찮아요. 지금 보이는 상황과 위치를
-              알려주시면 필요한 대응기관을 연결합니다.
+              담당 기관이나 정확한 사고 유형을 몰라도 괜찮아요. 상황과 위치를
+              알려주시면 OneReport가 분석해 필요한 대응기관을 연결합니다.
             </p>
           </div>
 
