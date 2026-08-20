@@ -117,9 +117,14 @@ async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
 
 
 def get_incident_service(
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_db_session)],
     publisher: Annotated[
         IncidentEventPublisher, Depends(get_incident_event_publisher)
     ],
 ) -> IncidentService:
-    return IncidentService(session, publisher)
+    return IncidentService(
+        session,
+        publisher,
+        object_storage=getattr(request.app.state, "object_storage", None),
+    )

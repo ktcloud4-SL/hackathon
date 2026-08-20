@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.errors import AppError, ForbiddenError, ResourceConflictError
+from app.integrations.storage import ObjectStorage
 from app.models import Agency, Incident, IncidentAgency, Report, TimelineEvent
 from app.schemas.auth import AgencyType, UserRole
 from app.schemas.domain import (
@@ -51,14 +52,20 @@ def _not_found(resource: str) -> AppError:
     return AppError(404, "RESOURCE_NOT_FOUND", f"{resource}을(를) 찾을 수 없습니다.")
 
 
-def report_view(report: Report) -> ReportView:
+def report_view(
+    report: Report,
+    object_storage: ObjectStorage | None = None,
+) -> ReportView:
+    image_url = None
+    if report.image_object_key is not None and object_storage is not None:
+        image_url = object_storage.create_download_url(report.image_object_key)
     return ReportView(
         id=report.id,
         description=report.description,
         address=report.address,
         latitude=report.latitude,
         longitude=report.longitude,
-        image_url=report.image_object_key,
+        image_url=image_url,
         created_at=report.created_at,
     )
 
@@ -83,10 +90,13 @@ def assignment_view(assignment: IncidentAgency) -> AgencyAssignmentView:
     )
 
 
-def incident_detail(incident: Incident) -> IncidentDetail:
+def incident_detail(
+    incident: Incident,
+    object_storage: ObjectStorage | None = None,
+) -> IncidentDetail:
     return IncidentDetail(
         **incident_summary(incident).model_dump(),
-        report=report_view(incident.report),
+        report=report_view(incident.report, object_storage),
         agencies=[assignment_view(item) for item in incident.agencies],
         timeline=[
             timeline_view(event)
@@ -102,9 +112,11 @@ class IncidentService:
         self,
         session: AsyncSession,
         publisher: IncidentEventPublisher,
+        object_storage: ObjectStorage | None = None,
     ) -> None:
         self._session = session
         self._publisher = publisher
+        self._object_storage = object_storage
 
     async def _load_incident(
         self, incident_id: int, *, for_update: bool = False
@@ -219,15 +231,21 @@ class IncidentService:
                 )
             await self._session.flush()
 
-        # Initial events are returned in the POST response and intentionally not SSE-published.
-        return ReportCreatedResponse(
-            report=report_view(report),
-            incident=incident_summary(incident),
-            agencies=[assignment_view(item) for item in assignments],
-        )
+            # Initial events are returned in the POST response and intentionally not
+            # SSE-published. Build the response before commit so a URL generation
+            # failure rolls back the DB transaction and lets the router remove S3 data.
+            response = ReportCreatedResponse(
+                report=report_view(report, self._object_storage),
+                incident=incident_summary(incident),
+                agencies=[assignment_view(item) for item in assignments],
+            )
+
+        return response
 
     async def get_detail(self, incident_id: int) -> IncidentDetail:
-        return incident_detail(await self._load_incident(incident_id))
+        return incident_detail(
+            await self._load_incident(incident_id), self._object_storage
+        )
 
     async def list_my_reports(self, reporter_user_id: int) -> list[MyReportItem]:
         reports = list(
@@ -242,7 +260,7 @@ class IncidentService:
         )
         return [
             MyReportItem(
-                **report_view(report).model_dump(),
+                **report_view(report, self._object_storage).model_dump(),
                 incident=incident_summary(report.incident),
             )
             for report in reports
@@ -267,7 +285,10 @@ class IncidentService:
             statement = statement.where(Incident.status == status.value)
         if severity:
             statement = statement.where(Incident.severity == severity.value)
-        return [incident_detail(item) for item in (await self._session.scalars(statement)).all()]
+        return [
+            incident_detail(item, self._object_storage)
+            for item in (await self._session.scalars(statement)).all()
+        ]
 
     async def list_agency_incidents(
         self,

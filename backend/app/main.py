@@ -16,8 +16,8 @@ from app.db.repositories import (
     SQLAlchemyIncidentAccessRepository,
     SQLAlchemyUserRepository,
 )
-from app.integrations.gcs import GoogleCloudObjectStorage
 from app.integrations.public_data import NoopIncidentContextProvider
+from app.integrations.s3 import S3ObjectStorage
 from app.routers.auth import router as auth_router
 from app.routers.agencies import router as agencies_router
 from app.routers.events import router as events_router
@@ -41,10 +41,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
     app.state.sse_broker = SSEBroker(settings.sse_heartbeat_seconds)
     app.state.incident_context_provider = NoopIncidentContextProvider()
-    if settings.storage_bucket:
-        app.state.object_storage = GoogleCloudObjectStorage(
-            bucket_name=settings.storage_bucket,
-            object_prefix=settings.storage_prefix,
+    if settings.s3_bucket:
+        app.state.object_storage = S3ObjectStorage(
+            bucket_name=settings.s3_bucket,
+            aws_region=settings.aws_region,
+            object_prefix=settings.s3_prefix,
+            presigned_url_expire_seconds=settings.s3_presigned_url_expire_seconds,
         )
     try:
         yield
