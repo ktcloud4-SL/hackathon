@@ -1,0 +1,1 @@
+"""Public data adapter placeholder."""
