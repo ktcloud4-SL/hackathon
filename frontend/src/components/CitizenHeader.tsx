@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import {
   clearCurrentUser,
   getCurrentUser,
+  getDefaultPathForUser,
   loadCurrentUser,
   logout,
   saveCurrentUser,
 } from "../api/auth";
+import { ApiError } from "../api/http";
 import type { UserPublic } from "../types/auth";
 
 type CitizenNavItem = "report" | "guide" | "my-reports";
@@ -19,23 +21,24 @@ export function CitizenHeader({ active }: CitizenHeaderProps) {
   const [user, setUser] = useState<UserPublic | null>(() => loadCurrentUser());
 
   useEffect(() => {
-    if (user) return;
-
     void getCurrentUser()
       .then((currentUser) => {
         saveCurrentUser(currentUser);
         setUser(currentUser);
       })
-      .catch(() => {
-        // 비로그인 또는 백엔드 연결 전에는 로그인 링크를 그대로 표시합니다.
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          clearCurrentUser();
+          setUser(null);
+        }
       });
-  }, [user]);
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
     } catch {
-      // API 연결 전 데모 로그인도 로컬 세션은 항상 정리합니다.
+      // 서버 응답 여부와 관계없이 브라우저의 사용자 표시는 정리합니다.
     } finally {
       clearCurrentUser();
       window.location.assign("/");
@@ -70,7 +73,7 @@ export function CitizenHeader({ active }: CitizenHeaderProps) {
       <div className="header-actions">
         {user ? (
           <div className="header-user-action">
-            <a className="header-user-name" href="/reports/me">{user.name}님</a>
+            <a className="header-user-name" href={getDefaultPathForUser(user)}>{user.name}님</a>
             <button className="logout-button" type="button" onClick={handleLogout}>로그아웃</button>
           </div>
         ) : (

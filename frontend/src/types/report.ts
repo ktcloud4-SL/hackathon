@@ -23,7 +23,7 @@ export interface CreateReportInput {
   latitude: number;
   longitude: number;
   image?: File;
-  categoryHint?: Category;
+  categories: Category[];
 }
 
 export interface CreateReportResponse {
@@ -31,7 +31,10 @@ export interface CreateReportResponse {
     id: number;
     description: string;
     address: string;
+    latitude: number;
+    longitude: number;
     imageUrl: string | null;
+    createdAt: string;
   };
   incident: {
     id: number;
@@ -39,10 +42,13 @@ export interface CreateReportResponse {
     severity: Severity;
     categories: Category[];
     createdAt: string;
+    updatedAt: string;
   };
   agencies: Array<{
     agencyType: AgencyType;
     status: AgencyStatus;
+    assignedAt: string;
+    updatedAt: string;
   }>;
 }
 
@@ -57,7 +63,26 @@ export interface MyReportItem {
     status: IncidentStatus;
     severity: Severity;
     categories: Category[];
+    createdAt: string;
+    updatedAt: string;
   };
+}
+
+export interface AgencyIncidentItem {
+  id: number;
+  incidentStatus: IncidentStatus;
+  agencyStatus: AgencyStatus;
+  severity: Severity;
+  categories: Category[];
+  description: string;
+  address: string;
+  assignedAt: string;
+  updatedAt: string;
+}
+
+export interface AgencyIncidentListResponse {
+  items: AgencyIncidentItem[];
+  total: number;
 }
 
 export interface MyReportsResponse {

@@ -4,6 +4,7 @@ import type {
   RegisterInput,
   UserPublic,
 } from "../types/auth";
+import type { AgencyType } from "../types/report";
 import { requestJson } from "./http";
 
 const USER_STORAGE_KEY = "onereport:current-user";
@@ -51,12 +52,18 @@ export function clearCurrentUser() {
   sessionStorage.removeItem(USER_STORAGE_KEY);
 }
 
-export function createDemoCitizen(name: string, email: string): UserPublic {
-  return {
-    id: 1,
-    email,
-    name: name.trim() || email.split("@")[0] || "시민 사용자",
-    role: "CITIZEN",
-    agencyType: null,
-  };
+const agencySlug: Record<AgencyType, string> = {
+  POLICE: "police",
+  FIRE: "fire",
+  KEPCO: "kepco",
+  ROAD: "road",
+  GAS: "gas",
+};
+
+export function getDefaultPathForUser(user: UserPublic): string {
+  if (user.role === "ADMIN") return "/admin";
+  if (user.role === "AGENCY" && user.agencyType) {
+    return `/agency/${agencySlug[user.agencyType]}`;
+  }
+  return "/reports/me";
 }

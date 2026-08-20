@@ -3,6 +3,7 @@ import type {
   IncidentStreamEvent,
   TimelineResponse,
 } from "../types/incident";
+import { requestJson } from "./http";
 
 const INCIDENT_EVENT_NAMES = [
   "agency-assigned",
@@ -13,33 +14,14 @@ const INCIDENT_EVENT_NAMES = [
   "incident-closed",
 ] as const;
 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { credentials: "include" });
-
-  if (!response.ok) {
-    let message = "Incident 정보를 불러오지 못했습니다.";
-
-    try {
-      const error = (await response.json()) as { message?: string };
-      if (error.message) message = error.message;
-    } catch {
-      // JSON 오류 응답이 아니면 기본 메시지를 사용합니다.
-    }
-
-    throw new Error(message);
-  }
-
-  return (await response.json()) as T;
-}
-
 export function getIncident(incidentId: number): Promise<IncidentDetail> {
-  return getJson<IncidentDetail>(`/api/incidents/${incidentId}`);
+  return requestJson<IncidentDetail>(`/api/incidents/${incidentId}`);
 }
 
 export function getIncidentTimeline(
   incidentId: number,
 ): Promise<TimelineResponse> {
-  return getJson<TimelineResponse>(`/api/incidents/${incidentId}/timeline`);
+  return requestJson<TimelineResponse>(`/api/incidents/${incidentId}/timeline`);
 }
 
 interface IncidentEventHandlers {

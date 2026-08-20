@@ -1,27 +1,11 @@
 import type { AgencyType, IncidentStatus, Severity } from "../types/report";
 import type { IncidentListResponse } from "../types/admin";
+import type { IncidentDetail } from "../types/incident";
+import { requestJson } from "./http";
 
 interface IncidentListFilters {
   incidentStatus?: IncidentStatus;
   severity?: Severity;
-}
-
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message ?? "요청을 처리하지 못했습니다.");
-  }
-
-  return data as T;
 }
 
 export function getAdminIncidents(filters: IncidentListFilters = {}) {
@@ -30,25 +14,31 @@ export function getAdminIncidents(filters: IncidentListFilters = {}) {
   if (filters.severity) params.set("severity", filters.severity);
   const query = params.toString();
 
-  return request<IncidentListResponse>(`/api/incidents${query ? `?${query}` : ""}`);
+  return requestJson<IncidentListResponse>(`/api/incidents${query ? `?${query}` : ""}`);
 }
 
-export function changeIncidentSeverity(incidentId: number, severity: Severity) {
-  return request(`/api/incidents/${incidentId}/severity`, {
+export function changeIncidentSeverity(
+  incidentId: number,
+  severity: Severity,
+): Promise<IncidentDetail> {
+  return requestJson<IncidentDetail>(`/api/incidents/${incidentId}/severity`, {
     method: "PATCH",
     body: JSON.stringify({ severity }),
   });
 }
 
-export function addIncidentAgency(incidentId: number, agencyType: AgencyType) {
-  return request(`/api/incidents/${incidentId}/agencies`, {
+export function addIncidentAgency(
+  incidentId: number,
+  agencyType: AgencyType,
+): Promise<IncidentDetail> {
+  return requestJson<IncidentDetail>(`/api/incidents/${incidentId}/agencies`, {
     method: "POST",
     body: JSON.stringify({ agencyType }),
   });
 }
 
-export function closeIncident(incidentId: number) {
-  return request(`/api/incidents/${incidentId}/close`, {
+export function closeIncident(incidentId: number): Promise<IncidentDetail> {
+  return requestJson<IncidentDetail>(`/api/incidents/${incidentId}/close`, {
     method: "PATCH",
   });
 }

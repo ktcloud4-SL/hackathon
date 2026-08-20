@@ -13,12 +13,12 @@ import {
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import {
-  createDemoCitizen,
+  getDefaultPathForUser,
   login,
   register,
   saveCurrentUser,
 } from "../api/auth";
-import { ApiError, isApiUnavailable } from "../api/http";
+import { ApiError } from "../api/http";
 import { CitizenHeader } from "../components/CitizenHeader";
 import "./auth-page.css";
 
@@ -83,20 +83,16 @@ export function AuthPage() {
       }
 
       saveCurrentUser(user);
-      window.location.assign(nextPath);
+      window.location.assign(
+        user.role === "CITIZEN" ? nextPath : getDefaultPathForUser(user),
+      );
     } catch (error) {
-      if (isApiUnavailable(error)) {
-        const demoUser = createDemoCitizen(name, email);
-        saveCurrentUser(demoUser);
-        window.location.assign(nextPath);
-        return;
-      }
-
       setErrorMessage(
         error instanceof ApiError
           ? error.message
           : "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       );
+    } finally {
       setIsSubmitting(false);
     }
   };

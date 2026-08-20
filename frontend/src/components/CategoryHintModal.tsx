@@ -66,15 +66,15 @@ const categoryOptions: Array<{
 ];
 
 interface CategoryHintModalProps {
-  selected: Category | null;
-  onSelect: (category: Category) => void;
+  selected: Category[];
+  onToggle: (category: Category) => void;
   onConfirm: () => void;
   onClose: () => void;
 }
 
 export function CategoryHintModal({
   selected,
-  onSelect,
+  onToggle,
   onConfirm,
   onClose,
 }: CategoryHintModalProps) {
@@ -101,28 +101,27 @@ export function CategoryHintModal({
             <span className="category-modal-icon"><ShieldAlert size={22} /></span>
             <div>
               <span>사고 유형 확인 필요</span>
-              <h2 id="category-modal-title">가장 가까운 사고 유형을 선택해 주세요.</h2>
+              <h2 id="category-modal-title">해당하는 사고 유형을 모두 선택해 주세요.</h2>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="사고 유형 선택 닫기"><X size={20} /></button>
         </header>
 
         <p className="category-modal-description">
-          입력한 내용만으로 사고 유형을 분류하기 어려워요. 현재 상황과 가장 가까운 유형 하나를 선택하면 해당 기관을 우선 배정합니다.
+          선택한 사고 유형을 기준으로 필요한 대응기관이 자동 배정됩니다. 하나 이상 선택해 주세요.
         </p>
 
-        <div className="category-option-grid" role="radiogroup" aria-label="사고 유형">
+        <div className="category-option-grid" role="group" aria-label="사고 유형">
           {categoryOptions.map((option) => {
             const Icon = option.icon;
-            const isSelected = selected === option.value;
+            const isSelected = selected.includes(option.value);
             return (
               <button
                 key={option.value}
                 type="button"
                 className={isSelected ? "selected" : ""}
-                role="radio"
-                aria-checked={isSelected}
-                onClick={() => onSelect(option.value)}
+                aria-pressed={isSelected}
+                onClick={() => onToggle(option.value)}
               >
                 <span className="category-option-icon"><Icon size={21} /></span>
                 <span className="category-option-copy">
@@ -143,8 +142,8 @@ export function CategoryHintModal({
 
         <footer className="category-modal-actions">
           <button type="button" className="category-cancel-button" onClick={onClose}>신고 내용 다시 확인</button>
-          <button type="button" className="category-confirm-button" onClick={onConfirm} disabled={!selected}>
-            선택한 유형으로 분석 <ArrowRight size={18} />
+          <button type="button" className="category-confirm-button" onClick={onConfirm} disabled={selected.length === 0}>
+            {selected.length}개 유형으로 신고 접수 <ArrowRight size={18} />
           </button>
         </footer>
       </section>

@@ -14,13 +14,14 @@ export async function requestJson<T>(
   init?: RequestInit,
 ): Promise<T> {
   let response: Response;
+  const hasJsonBody = Boolean(init?.body) && !(init?.body instanceof FormData);
 
   try {
     response = await fetch(url, {
       ...init,
       credentials: "include",
       headers: {
-        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(hasJsonBody ? { "Content-Type": "application/json" } : {}),
         ...init?.headers,
       },
     });
@@ -50,15 +51,4 @@ export async function requestJson<T>(
   }
 
   return data;
-}
-
-export function isApiUnavailable(error: unknown) {
-  return error instanceof ApiError && (
-    error.status === 0 ||
-    error.status === 404 ||
-    error.status === 405 ||
-    error.status === 502 ||
-    error.status === 503 ||
-    error.code === "INVALID_API_RESPONSE"
-  );
 }

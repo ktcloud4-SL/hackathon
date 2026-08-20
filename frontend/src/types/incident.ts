@@ -7,6 +7,7 @@ import type {
 } from "./report";
 
 export type TimelineEventType =
+  | "REPORT_CREATED"
   | "INCIDENT_CREATED"
   | "INCIDENT_CLASSIFIED"
   | "AGENCY_ASSIGNED"
@@ -40,6 +41,8 @@ export interface IncidentDetail {
     id: number;
     description: string;
     address: string;
+    latitude: number;
+    longitude: number;
     imageUrl: string | null;
     createdAt: string;
   };
@@ -47,6 +50,8 @@ export interface IncidentDetail {
   timeline: TimelineEvent[];
   createdAt: string;
   updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
 }
 
 export interface IncidentEventData {

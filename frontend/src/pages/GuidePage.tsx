@@ -31,7 +31,7 @@ const responseSteps = [
   },
   {
     number: "02",
-    title: "위험 분석·기관 배정",
+    title: "사고 유형 선택·기관 배정",
     copy: "신고 내용을 복수 사고 유형으로 분류하고 필요한 기관을 함께 배정합니다.",
     icon: Sparkles,
   },
@@ -111,7 +111,7 @@ export function GuidePage() {
             <span className="guide-section-icon"><Building2 size={21} /></span>
             <span className="guide-small-title">서비스 범위</span>
             <h2>OneReport는 기관을 대체하지 않고<br />공동대응을 연결합니다.</h2>
-            <p>해커톤 MVP의 모든 기관 화면과 상태 변경은 Mock입니다. 실제 긴급기관 시스템으로 신고가 전달되지는 않습니다.</p>
+            <p>해커톤 MVP 시연 시스템이므로 실제 긴급기관 시스템으로 신고가 전달되지는 않습니다.</p>
             <div className="emergency-number-callout"><CircleAlert size={19} /><span><strong>생명이 위험하면 즉시 112·119</strong>OneReport 화면을 기다리지 말고 먼저 전화하세요.</span></div>
           </div>
 
