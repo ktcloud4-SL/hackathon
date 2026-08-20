@@ -17,6 +17,7 @@ import { ApiError } from "../api/http";
 import { createReport } from "../api/reports";
 import { CitizenHeader } from "../components/CitizenHeader";
 import { CategoryHintModal } from "../components/CategoryHintModal";
+import { AiAnalysisModal } from "../components/AiAnalysisModal";
 import { saveReportResult } from "../state/reportResult";
 import type { Category } from "../types/report";
 
@@ -24,6 +25,8 @@ interface Coordinates {
   latitude: number;
   longitude: number;
 }
+
+const MIN_ANALYSIS_DISPLAY_MS = 2200;
 
 const addressSuggestions = [
   {
@@ -134,8 +137,10 @@ export function ReportPage() {
 
   const submitReport = async () => {
     if (!coordinates) return;
+    setIsCategoryModalOpen(false);
     setIsSubmitting(true);
     setNotice(null);
+    const analysisStartedAt = performance.now();
 
     try {
       const result = await createReport({
@@ -146,10 +151,16 @@ export function ReportPage() {
         image: image ?? undefined,
         categories: selectedCategories,
       });
+      const remainingDisplayTime = Math.max(
+        0,
+        MIN_ANALYSIS_DISPLAY_MS - (performance.now() - analysisStartedAt),
+      );
+      if (remainingDisplayTime > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, remainingDisplayTime));
+      }
       saveReportResult(result);
       window.location.assign("/report/analysis");
     } catch (error) {
-      setIsCategoryModalOpen(false);
       if (error instanceof ApiError && error.status === 401) {
         window.location.assign("/login?next=%2F");
         return;
@@ -451,6 +462,8 @@ export function ReportPage() {
           }}
         />
       )}
+
+      {isSubmitting && <AiAnalysisModal />}
     </div>
   );
 }
