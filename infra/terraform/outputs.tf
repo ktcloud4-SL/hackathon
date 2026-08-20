@@ -38,3 +38,20 @@ output "ssh_connection_command" {
   description = "Example command to SSH into the instance"
   value       = "ssh -i onereport-key.pem ubuntu@${aws_eip.app_eip.public_ip}"
 }
+
+# RDS Outputs
+output "rds_endpoint" {
+  description = "RDS PostgreSQL connection endpoint with port"
+  value       = aws_db_instance.postgres.endpoint
+}
+
+output "rds_address" {
+  description = "RDS PostgreSQL host address"
+  value       = aws_db_instance.postgres.address
+}
+
+output "rds_port" {
+  description = "RDS PostgreSQL port"
+  value       = aws_db_instance.postgres.port
+}
+
