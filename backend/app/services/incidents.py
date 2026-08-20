@@ -131,7 +131,7 @@ class IncidentService:
             .where(Incident.id == incident_id)
         )
         if for_update:
-            statement = statement.with_for_update()
+            statement = statement.with_for_update(of=Incident)
         incident = await self._session.scalar(statement)
         if incident is None:
             raise _not_found("Incident")
