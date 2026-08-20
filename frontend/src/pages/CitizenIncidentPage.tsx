@@ -1,0 +1,460 @@
+import {
+  Activity,
+  ArrowLeft,
+  BellRing,
+  Building2,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleDot,
+  Clock3,
+  MapPin,
+  Radio,
+  RefreshCw,
+  Route,
+  ShieldCheck,
+  Siren,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  connectIncidentEvents,
+  getIncident,
+  getIncidentTimeline,
+} from "../api/incidents";
+import { CitizenHeader } from "../components/CitizenHeader";
+import {
+  createMockIncidentDetail,
+  loadReportResult,
+} from "../mocks/citizenIncident";
+import type {
+  IncidentDetail,
+  IncidentStreamEvent,
+  TimelineEvent,
+} from "../types/incident";
+import type {
+  AgencyStatus,
+  AgencyType,
+  Category,
+  IncidentStatus,
+  Severity,
+} from "../types/report";
+import "./citizen-flow.css";
+
+const agencyStatusOrder: AgencyStatus[] = [
+  "ASSIGNED",
+  "RECEIVED",
+  "DISPATCHED",
+  "ARRIVED",
+  "IN_PROGRESS",
+  "COMPLETED",
+];
+
+const agencyLabels: Record<AgencyType, { label: string; short: string }> = {
+  POLICE: { label: "경찰", short: "112" },
+  FIRE: { label: "소방·구급", short: "119" },
+  KEPCO: { label: "한국전력", short: "한전" },
+  ROAD: { label: "도로관리", short: "도로" },
+  GAS: { label: "가스안전", short: "가스" },
+};
+
+const agencyStatusLabels: Record<AgencyStatus, string> = {
+  ASSIGNED: "배정됨",
+  RECEIVED: "접수 완료",
+  DISPATCHED: "출동 중",
+  ARRIVED: "현장 도착",
+  IN_PROGRESS: "대응 중",
+  COMPLETED: "대응 완료",
+};
+
+const incidentStatusLabels: Record<IncidentStatus, { label: string; copy: string }> = {
+  OPEN: { label: "기관 접수 대기", copy: "필요한 기관에 신고가 배정되었습니다." },
+  RESPONDING: { label: "공동대응 중", copy: "한 곳 이상의 기관이 신고를 확인하고 대응 중입니다." },
+  RESOLVED: { label: "대응 완료", copy: "모든 참여 기관의 현장 대응이 완료되었습니다." },
+  CLOSED: { label: "상황 종료", copy: "관리자가 Incident를 최종 종료했습니다." },
+};
+
+const severityLabels: Record<Severity, string> = {
+  LOW: "낮음",
+  MEDIUM: "보통",
+  HIGH: "높음",
+  CRITICAL: "긴급",
+};
+
+const categoryLabels: Record<Category, string> = {
+  TRAFFIC_ACCIDENT: "교통사고",
+  HUMAN_INJURY: "인명 피해",
+  ELECTRIC_DAMAGE: "전기 설비 파손",
+  FIRE_RISK: "화재 위험",
+  ROAD_DAMAGE: "도로 파손",
+  GAS_RISK: "가스 위험",
+};
+
+type ConnectionState = "connecting" | "live" | "retrying" | "demo";
+
+function parseIncidentId() {
+  const segment = window.location.pathname.split("/").filter(Boolean).at(-1);
+  const incidentId = Number(segment);
+  return Number.isFinite(incidentId) && incidentId > 0 ? incidentId : 42;
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function applyStreamEvent(
+  current: IncidentDetail,
+  event: IncidentStreamEvent,
+): IncidentDetail {
+  if (event.incidentId !== current.id) return current;
+
+  let agencies = current.agencies;
+  let status = event.data.incidentStatus ?? current.status;
+  let severity = event.data.severity ?? current.severity;
+
+  if (event.type === "AGENCY_ASSIGNED") {
+    const agencyType = event.data.targetAgencyType ?? event.data.agencyType;
+    if (agencyType && !agencies.some((agency) => agency.agencyType === agencyType)) {
+      agencies = [
+        ...agencies,
+        {
+          agencyType,
+          status: "ASSIGNED",
+          assignedAt: event.occurredAt,
+          updatedAt: event.occurredAt,
+        },
+      ];
+    }
+  }
+
+  if (
+    event.type === "AGENCY_STATUS_CHANGED" &&
+    event.data.agencyType &&
+    event.data.status
+  ) {
+    agencies = agencies.map((agency) =>
+      agency.agencyType === event.data.agencyType
+        ? { ...agency, status: event.data.status!, updatedAt: event.occurredAt }
+        : agency,
+    );
+  }
+
+  if (event.type === "INCIDENT_RESOLVED") status = "RESOLVED";
+  if (event.type === "INCIDENT_CLOSED") status = "CLOSED";
+  if (event.type === "SEVERITY_CHANGED" && event.data.severity) {
+    severity = event.data.severity;
+  }
+
+  const timeline = event.timelineEvent &&
+    !current.timeline.some((item) => item.id === event.timelineEvent!.id)
+    ? [...current.timeline, event.timelineEvent]
+    : current.timeline;
+
+  return {
+    ...current,
+    agencies,
+    status,
+    severity,
+    timeline,
+    updatedAt: event.occurredAt,
+  };
+}
+
+function connectionContent(state: ConnectionState) {
+  if (state === "live") return { label: "실시간 연결됨", icon: Wifi };
+  if (state === "retrying") return { label: "재연결 중", icon: RefreshCw };
+  if (state === "connecting") return { label: "연결 확인 중", icon: Radio };
+  return { label: "데모 데이터", icon: WifiOff };
+}
+
+export function CitizenIncidentPage() {
+  const incidentId = useMemo(parseIncidentId, []);
+  const [incident, setIncident] = useState<IncidentDetail>(() => ({
+    ...createMockIncidentDetail(loadReportResult()),
+    id: incidentId,
+  }));
+  const [connection, setConnection] = useState<ConnectionState>("connecting");
+
+  useEffect(() => {
+    let source: EventSource | undefined;
+    let disposed = false;
+    let hasOpened = false;
+
+    const synchronize = async () => {
+      const [detail, timeline] = await Promise.all([
+        getIncident(incidentId),
+        getIncidentTimeline(incidentId),
+      ]);
+
+      if (!disposed) {
+        setIncident({ ...detail, timeline: timeline.items });
+      }
+    };
+
+    void synchronize()
+      .then(() => {
+        if (disposed) return;
+
+        source = connectIncidentEvents(incidentId, {
+          onEvent: (event) => setIncident((current) => applyStreamEvent(current, event)),
+          onOpen: () => {
+            setConnection("live");
+            if (hasOpened) void synchronize();
+            hasOpened = true;
+          },
+          onError: () => setConnection("retrying"),
+        });
+      })
+      .catch(() => {
+        if (!disposed) setConnection("demo");
+      });
+
+    return () => {
+      disposed = true;
+      source?.close();
+    };
+  }, [incidentId]);
+
+  const statusDetail = incidentStatusLabels[incident.status];
+  const connectionDetail = connectionContent(connection);
+  const ConnectionIcon = connectionDetail.icon;
+
+  const progress = useMemo(() => {
+    if (incident.agencies.length === 0) return 0;
+    const total = incident.agencies.reduce(
+      (sum, agency) => sum + agencyStatusOrder.indexOf(agency.status),
+      0,
+    );
+    return Math.round(
+      (total / (incident.agencies.length * (agencyStatusOrder.length - 1))) * 100,
+    );
+  }, [incident.agencies]);
+
+  const sortedTimeline = useMemo(
+    () => [...incident.timeline].sort((a, b) => b.id - a.id),
+    [incident.timeline],
+  );
+
+  const advanceDemoStatus = () => {
+    setIncident((current) => {
+      const target = current.agencies.find((agency) => agency.status !== "COMPLETED");
+      if (!target) return current;
+
+      const currentIndex = agencyStatusOrder.indexOf(target.status);
+      const nextStatus = agencyStatusOrder[currentIndex + 1];
+      const occurredAt = new Date().toISOString();
+      const agencies = current.agencies.map((agency) =>
+        agency.agencyType === target.agencyType
+          ? { ...agency, status: nextStatus, updatedAt: occurredAt }
+          : agency,
+      );
+      const completed = agencies.every((agency) => agency.status === "COMPLETED");
+      const nextIncidentStatus: IncidentStatus = completed ? "RESOLVED" : "RESPONDING";
+      const nextId = Math.max(0, ...current.timeline.map((item) => item.id)) + 1;
+      const timelineEvent: TimelineEvent = {
+        id: nextId,
+        type: completed ? "INCIDENT_RESOLVED" : "AGENCY_STATUS_CHANGED",
+        message: completed
+          ? "모든 참여 기관의 대응이 완료되었습니다."
+          : `${agencyLabels[target.agencyType].label} 상태가 '${agencyStatusLabels[nextStatus]}'(으)로 변경되었습니다.`,
+        occurredAt,
+        metadata: {
+          agencyType: target.agencyType,
+          previousStatus: target.status,
+          status: nextStatus,
+          incidentStatus: nextIncidentStatus,
+        },
+      };
+
+      return {
+        ...current,
+        agencies,
+        status: nextIncidentStatus,
+        timeline: [...current.timeline, timelineEvent],
+        updatedAt: occurredAt,
+      };
+    });
+  };
+
+  return (
+    <div className="app-shell citizen-flow-shell">
+      <CitizenHeader active="my-reports" />
+
+      <main className="citizen-flow-main incident-main">
+        <div className="flow-breadcrumb incident-breadcrumb">
+          <a href="/#my-reports"><ArrowLeft size={16} /> 내 신고</a>
+          <span>Incident #{incident.id}</span>
+          <span className={`connection-badge connection-${connection}`}>
+            <ConnectionIcon size={14} /> {connectionDetail.label}
+          </span>
+        </div>
+
+        <section className={`incident-hero incident-${incident.status.toLowerCase()}`}>
+          <div className="incident-hero-heading">
+            <span className="incident-icon"><Siren size={26} /></span>
+            <div>
+              <span>Incident #{incident.id}</span>
+              <h1>{statusDetail.label}</h1>
+              <p>{statusDetail.copy}</p>
+            </div>
+          </div>
+          <div className="incident-hero-meta">
+            <span className={`severity-pill severity-${incident.severity.toLowerCase()}`}>
+              긴급도 {severityLabels[incident.severity]}
+            </span>
+            <span><Clock3 size={15} /> {formatDateTime(incident.updatedAt)} 업데이트</span>
+          </div>
+          <div className="overall-progress">
+            <div>
+              <span>전체 대응 진행률</span>
+              <strong>{progress}%</strong>
+            </div>
+            <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
+          </div>
+        </section>
+
+        <div className="incident-layout">
+          <div className="incident-primary-column">
+            <section className="flow-card responding-agencies-card">
+              <div className="flow-card-heading">
+                <div>
+                  <span className="live-dot"><span /> LIVE</span>
+                  <h2>기관별 대응 현황</h2>
+                </div>
+                <span className="result-count">{incident.agencies.length}개 기관</span>
+              </div>
+
+              <div className="agency-response-list">
+                {incident.agencies.map((agency) => {
+                  const detail = agencyLabels[agency.agencyType];
+                  const statusIndex = agencyStatusOrder.indexOf(agency.status);
+
+                  return (
+                    <article key={agency.agencyType} className={`agency-response agency-${agency.agencyType.toLowerCase()}`}>
+                      <div className="agency-response-top">
+                        <span className="agency-symbol">{detail.short}</span>
+                        <div>
+                          <strong>{detail.label}</strong>
+                          <small>마지막 변경 {formatTime(agency.updatedAt)}</small>
+                        </div>
+                        <span className={`agency-current-status status-${agency.status.toLowerCase()}`}>
+                          {agency.status === "COMPLETED" && <Check size={14} />}
+                          {agencyStatusLabels[agency.status]}
+                        </span>
+                      </div>
+                      <div className="agency-stepper" aria-label={`${detail.label} 대응 단계`}>
+                        {agencyStatusOrder.map((status, index) => (
+                          <span
+                            key={status}
+                            className={index <= statusIndex ? "done" : ""}
+                            title={agencyStatusLabels[status]}
+                          />
+                        ))}
+                      </div>
+                      <div className="agency-step-labels">
+                        <span>배정</span><span>접수</span><span>출동</span><span>도착</span><span>대응</span><span>완료</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {connection === "demo" && (
+                <div className="demo-control">
+                  <div>
+                    <span><Activity size={17} /> 백엔드 연결 전 데모</span>
+                    <p>버튼을 눌러 SSE로 수신될 기관 상태 변경을 미리 확인할 수 있어요.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={advanceDemoStatus}
+                    disabled={incident.status === "RESOLVED" || incident.status === "CLOSED"}
+                  >
+                    상태 한 단계 진행 <ChevronRight size={17} />
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="flow-card timeline-card">
+              <div className="flow-card-heading">
+                <div>
+                  <span className="section-number"><BellRing size={15} /></span>
+                  <h2>실시간 상황 기록</h2>
+                </div>
+                <span className="result-count">{incident.timeline.length}건</span>
+              </div>
+
+              <ol className="citizen-timeline">
+                {sortedTimeline.map((event, index) => (
+                  <li key={event.id} className={index === 0 ? "latest" : ""}>
+                    <span className="timeline-node">
+                      {event.type === "INCIDENT_RESOLVED" || event.type === "INCIDENT_CLOSED"
+                        ? <CheckCircle2 size={18} />
+                        : event.type === "AGENCY_STATUS_CHANGED"
+                          ? <Radio size={18} />
+                          : <CircleDot size={17} />}
+                    </span>
+                    <div>
+                      <span>{formatTime(event.occurredAt)}{index === 0 && <em>최신</em>}</span>
+                      <p>{event.message}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          </div>
+
+          <aside className="incident-side-column">
+            <section className="flow-card incident-summary-card">
+              <div className="flow-card-heading compact">
+                <div><span className="section-number"><Building2 size={15} /></span><h2>신고 요약</h2></div>
+              </div>
+              <div className="summary-location">
+                <span><MapPin size={18} /></span>
+                <div><small>사고 위치</small><strong>{incident.report.address}</strong></div>
+              </div>
+              <p className="summary-description">{incident.report.description}</p>
+              <div className="summary-categories">
+                {incident.categories.map((category) => <span key={category}>{categoryLabels[category]}</span>)}
+              </div>
+              <a href="/report/analysis">분석 결과 다시 보기 <ChevronRight size={16} /></a>
+            </section>
+
+            <section className="citizen-safety-card">
+              <span><ShieldCheck size={22} /></span>
+              <div>
+                <strong>안전한 곳에서 기다려 주세요.</strong>
+                <p>현장 상황이 급격히 악화되거나 생명이 위험하면 이 화면을 기다리지 말고 112 또는 119에 전화하세요.</p>
+              </div>
+            </section>
+
+            <section className="incident-id-card">
+              <div><Route size={18} /><span>접수 번호</span></div>
+              <strong>OR-{new Date(incident.createdAt).getFullYear()}-{String(incident.id).padStart(6, "0")}</strong>
+              <small>문의 시 접수 번호를 알려주세요.</small>
+            </section>
+          </aside>
+        </div>
+      </main>
+
+      <footer>
+        <span>OneReport</span>
+        <p>한 번의 신고, 여러 기관의 공동대응</p>
+      </footer>
+    </div>
+  );
+}
