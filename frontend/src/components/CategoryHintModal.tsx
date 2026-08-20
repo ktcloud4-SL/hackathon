@@ -67,6 +67,7 @@ const categoryOptions: Array<{
 
 interface CategoryHintModalProps {
   selected: Category[];
+  hasRecommendation?: boolean;
   onToggle: (category: Category) => void;
   onConfirm: () => void;
   onClose: () => void;
@@ -74,6 +75,7 @@ interface CategoryHintModalProps {
 
 export function CategoryHintModal({
   selected,
+  hasRecommendation = false,
   onToggle,
   onConfirm,
   onClose,
@@ -100,15 +102,21 @@ export function CategoryHintModal({
           <div>
             <span className="category-modal-icon"><ShieldAlert size={22} /></span>
             <div>
-              <span>사고 유형 확인 필요</span>
-              <h2 id="category-modal-title">해당하는 사고 유형을 모두 선택해 주세요.</h2>
+              <span>{hasRecommendation ? "신고 내용 분석 결과" : "사고 유형 확인 필요"}</span>
+              <h2 id="category-modal-title">
+                {hasRecommendation
+                  ? "추천 사고 유형을 확인해 주세요."
+                  : "해당하는 사고 유형을 모두 선택해 주세요."}
+              </h2>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="사고 유형 선택 닫기"><X size={20} /></button>
         </header>
 
         <p className="category-modal-description">
-          선택한 사고 유형을 기준으로 필요한 대응기관이 자동 배정됩니다. 하나 이상 선택해 주세요.
+          {hasRecommendation
+            ? "신고 설명에서 감지한 추천입니다. 필요하면 수정한 뒤 접수해 주세요."
+            : "자동으로 분류하지 못했습니다. 해당하는 유형을 하나 이상 직접 선택해 주세요."}
         </p>
 
         <div className="category-option-grid" role="group" aria-label="사고 유형">

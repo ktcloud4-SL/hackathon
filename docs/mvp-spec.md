@@ -42,7 +42,7 @@ POLICE | FIRE | KEPCO | ROAD | GAS
 
 ## 분류와 Routing
 
-시민이 신고 시 복수 Category를 직접 선택합니다. MVP에서는 자동 Classification을 수행하지 않으며, 향후 분류 방식이 바뀌어도 아래 Routing 규칙 이후 흐름은 그대로 재사용합니다.
+신고 생성 전 규칙 기반 분석이 복수 Category와 Severity를 추천하며 시민은 추천 결과를 확인하거나 수정할 수 있습니다. 자동 분류가 불가능하거나 분석 요청이 실패하면 기존 Category 직접 선택으로 전환합니다. 확정된 Category 이후에는 아래 Routing 규칙을 그대로 재사용합니다.
 
 | Category | Agency |
 | --- | --- |

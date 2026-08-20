@@ -18,6 +18,7 @@ from app.db.repositories import (
 )
 from app.integrations.public_data import NoopIncidentContextProvider
 from app.integrations.s3 import S3ObjectStorage
+from app.routers.analysis import router as analysis_router
 from app.routers.auth import router as auth_router
 from app.routers.agencies import router as agencies_router
 from app.routers.events import router as events_router
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    application.include_router(analysis_router, prefix="/api")
     application.include_router(auth_router, prefix="/api")
     application.include_router(reports_router, prefix="/api")
     application.include_router(incidents_router, prefix="/api")
