@@ -11,18 +11,16 @@ import {
   Radio,
   Search,
   ShieldCheck,
-  Siren,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   getCurrentUser,
-  loadCurrentUser,
+  getDefaultPathForUser,
   saveCurrentUser,
 } from "../api/auth";
-import { ApiError, isApiUnavailable } from "../api/http";
+import { ApiError } from "../api/http";
 import { getMyReports } from "../api/reports";
 import { CitizenHeader } from "../components/CitizenHeader";
-import { createMockMyReports } from "../mocks/myReports";
 import type { Category, IncidentStatus, MyReportItem, Severity } from "../types/report";
 import "./my-reports.css";
 
@@ -72,7 +70,6 @@ export function MyReportsPage() {
   const [filter, setFilter] = useState<ReportFilter>("ALL");
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -80,10 +77,11 @@ export function MyReportsPage() {
 
     const load = async () => {
       try {
-        let user = loadCurrentUser();
-        if (!user) {
-          user = await getCurrentUser();
-          saveCurrentUser(user);
+        const user = await getCurrentUser();
+        saveCurrentUser(user);
+        if (user.role !== "CITIZEN") {
+          window.location.replace(getDefaultPathForUser(user));
+          return;
         }
 
         const response = await getMyReports();
@@ -94,21 +92,12 @@ export function MyReportsPage() {
           return;
         }
 
-        if (isApiUnavailable(error)) {
-          if (!loadCurrentUser()) {
-            window.location.replace("/login?next=%2Freports%2Fme");
-            return;
-          }
-
-          if (!disposed) {
-            setReports(createMockMyReports().items);
-            setIsDemo(true);
-          }
-          return;
-        }
-
         if (!disposed) {
-          setErrorMessage("신고 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "신고 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          );
         }
       } finally {
         if (!disposed) setIsLoading(false);
@@ -187,10 +176,6 @@ export function MyReportsPage() {
           </label>
         </div>
 
-        {isDemo && (
-          <div className="reports-demo-note"><Siren size={16} />백엔드 신고 목록 API 연결 전이므로 데모 신고 내역을 표시하고 있습니다.</div>
-        )}
-
         {isLoading ? (
           <div className="reports-loading" role="status"><span /><span /><span /></div>
         ) : errorMessage ? (
@@ -210,7 +195,6 @@ export function MyReportsPage() {
                   key={report.id}
                   className="my-report-card"
                   href={`/incidents/${report.incident.id}`}
-                  onClick={() => sessionStorage.setItem("onereport:selected-report", JSON.stringify(report))}
                 >
                   <div className={`report-status-rail status-${report.incident.status.toLowerCase()}`} />
                   <div className="report-card-main">

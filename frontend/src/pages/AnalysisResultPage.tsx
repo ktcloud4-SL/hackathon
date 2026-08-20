@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { CitizenHeader } from "../components/CitizenHeader";
-import { loadReportResult } from "../mocks/citizenIncident";
+import { loadReportResult } from "../state/reportResult";
 import type { AgencyType, Category, Severity } from "../types/report";
 import "./citizen-flow.css";
 
@@ -84,6 +84,20 @@ function formatCreatedAt(value: string) {
 
 export function AnalysisResultPage() {
   const result = useMemo(loadReportResult, []);
+  if (!result) {
+    return (
+      <div className="app-shell citizen-flow-shell">
+        <CitizenHeader active="report" />
+        <main className="citizen-flow-main analysis-main">
+          <section className="flow-card">
+            <h1>최근 신고 접수 결과가 없습니다.</h1>
+            <p>새 신고를 접수하거나 내 신고 목록에서 진행 상황을 확인해 주세요.</p>
+            <a href="/">신고하러 가기</a>
+          </section>
+        </main>
+      </div>
+    );
+  }
   const severity = severityDetails[result.incident.severity];
 
   return (
@@ -95,7 +109,7 @@ export function AnalysisResultPage() {
           <a href="/">
             <ArrowLeft size={16} /> 신고서로 돌아가기
           </a>
-          <span>신고 분석 결과</span>
+          <span>신고 접수 결과</span>
         </div>
 
         <section className="analysis-hero">
@@ -104,12 +118,12 @@ export function AnalysisResultPage() {
           </div>
           <div className="analysis-hero-copy">
             <span className="flow-eyebrow">
-              <BadgeCheck size={16} /> 분석 완료
+              <BadgeCheck size={16} /> 접수 완료
             </span>
-            <h1>신고 내용을 분석했어요.</h1>
+            <h1>신고가 정상적으로 접수되었어요.</h1>
             <p>
-              입력하신 상황에서 {result.incident.categories.length}개의 위험 요소를
-              확인하고 필요한 기관 {result.agencies.length}곳을 배정했습니다.
+              선택하신 {result.incident.categories.length}개의 사고 유형을 기준으로
+              필요한 기관 {result.agencies.length}곳을 배정했습니다.
             </p>
           </div>
           <div className={`severity-summary severity-${result.incident.severity.toLowerCase()}`}>
@@ -124,7 +138,7 @@ export function AnalysisResultPage() {
             <div className="flow-card-heading">
               <div>
                 <span className="section-number">01</span>
-                <h2>확인된 사고 유형</h2>
+                <h2>선택한 사고 유형</h2>
               </div>
               <span className="result-count">{result.incident.categories.length}개</span>
             </div>
@@ -181,7 +195,7 @@ export function AnalysisResultPage() {
             </div>
 
             <div className="assignment-flow">
-              <span><Check size={15} /> 상황 분류</span>
+              <span><Check size={15} /> 유형 확인</span>
               <span className="flow-line" />
               <span><Check size={15} /> 기관 배정</span>
               <span className="flow-line muted" />
@@ -196,7 +210,7 @@ export function AnalysisResultPage() {
               <span className="section-number">03</span>
               <h2>신고 내용</h2>
             </div>
-            <span className="incident-preview-id">예상 Incident #{result.incident.id}</span>
+            <span className="incident-preview-id">Incident #{result.incident.id}</span>
           </div>
           <div className="report-recap-content">
             <div className="recap-description">
@@ -205,7 +219,7 @@ export function AnalysisResultPage() {
             </div>
             <div className="recap-meta">
               <div><MapPin size={17} /><span><small>사고 위치</small><strong>{result.report.address}</strong></span></div>
-              <div><Clock3 size={17} /><span><small>분석 시각</small><strong>{formatCreatedAt(result.incident.createdAt)}</strong></span></div>
+              <div><Clock3 size={17} /><span><small>접수 시각</small><strong>{formatCreatedAt(result.incident.createdAt)}</strong></span></div>
             </div>
           </div>
         </section>

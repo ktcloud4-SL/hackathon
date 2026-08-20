@@ -24,8 +24,23 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { adminIncidents } from "../mocks/adminIncidents";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  addIncidentAgency,
+  changeIncidentSeverity,
+  closeIncident,
+  getAdminIncidents,
+} from "../api/admin";
+import {
+  clearCurrentUser,
+  getCurrentUser,
+  getDefaultPathForUser,
+  logout,
+  saveCurrentUser,
+} from "../api/auth";
+import { ApiError } from "../api/http";
+import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
   AgencyStatus,
@@ -96,9 +111,18 @@ function formatDate(dateTime: string) {
   }).format(new Date(dateTime));
 }
 
+function formatToday() {
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  }).format(new Date());
+}
+
 export function AdminDashboardPage() {
-  const [incidents, setIncidents] = useState<AdminIncident[]>(adminIncidents);
-  const [selectedIncidentId, setSelectedIncidentId] = useState(adminIncidents[0].id);
+  const [incidents, setIncidents] = useState<AdminIncident[]>([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | "ALL">("ALL");
   const [severityFilter, setSeverityFilter] = useState<Severity | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,11 +130,101 @@ export function AdminDashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [toast, setToast] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState("통합 관리자");
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [isDetailLive, setIsDetailLive] = useState(false);
 
   useEffect(() => {
-    const interval = window.setInterval(() => setLastSyncedAt(new Date()), 5000);
-    return () => window.clearInterval(interval);
+    void getCurrentUser()
+      .then((user) => {
+        saveCurrentUser(user);
+        if (user.role !== "ADMIN") {
+          window.location.replace(getDefaultPathForUser(user));
+          return;
+        }
+        setAdminName(user.name);
+        setIsAuthorized(true);
+      })
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.replace("/login?next=%2Fadmin");
+          return;
+        }
+        setErrorMessage(error instanceof Error ? error.message : "관리자 인증을 확인하지 못했습니다.");
+        setIsLoading(false);
+      });
   }, []);
+
+  const refreshIncidents = useCallback(async () => {
+    try {
+      const response = await getAdminIncidents();
+      setIncidents(response.items);
+      setSelectedIncidentId((current) =>
+        current && response.items.some((item) => item.id === current)
+          ? current
+          : response.items[0]?.id ?? null,
+      );
+      setLastSyncedAt(new Date());
+      setErrorMessage(null);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.replace("/login?next=%2Fadmin");
+        return;
+      }
+      setErrorMessage(error instanceof Error ? error.message : "Incident 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    void refreshIncidents();
+    const interval = window.setInterval(() => void refreshIncidents(), 5000);
+    return () => window.clearInterval(interval);
+  }, [isAuthorized, refreshIncidents]);
+
+  useEffect(() => {
+    if (!isAuthorized || selectedIncidentId === null) return;
+    const incidentId = selectedIncidentId;
+    const source = connectIncidentEvents(incidentId, {
+      onEvent: (event) => setIncidents((current) =>
+        current.map((incident) =>
+          incident.id === incidentId
+            ? applyIncidentStreamEvent(incident, event)
+            : incident,
+        )
+      ),
+      onOpen: () => {
+        setIsDetailLive(true);
+        void getIncident(incidentId)
+          .then((detail) => setIncidents((current) =>
+            current.map((incident) => incident.id === detail.id ? detail : incident)
+          ))
+          .catch((error) => {
+            if (error instanceof ApiError && error.status === 401) {
+              window.location.replace("/login?next=%2Fadmin");
+            }
+          });
+      },
+      onError: () => {
+        setIsDetailLive(false);
+        void getCurrentUser().catch((error) => {
+          if (error instanceof ApiError && error.status === 401) {
+            window.location.replace("/login?next=%2Fadmin");
+          }
+        });
+      },
+    });
+
+    return () => {
+      source.close();
+      setIsDetailLive(false);
+    };
+  }, [isAuthorized, selectedIncidentId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -133,90 +247,86 @@ export function AdminDashboardPage() {
   }, [incidents, searchQuery, severityFilter, statusFilter]);
 
   const selectedIncident =
-    incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0];
+    incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0] ?? null;
 
-  const availableAgencies = allAgencies.filter(
+  const availableAgencies = selectedIncident ? allAgencies.filter(
     (agencyType) =>
       !selectedIncident.agencies.some((agency) => agency.agencyType === agencyType),
-  );
+  ) : [];
 
-  const updateSelectedIncident = (updater: (incident: AdminIncident) => AdminIncident) => {
+  const updateIncident = (updated: AdminIncident) => {
     setIncidents((current) =>
       current.map((incident) =>
-        incident.id === selectedIncident.id ? updater(incident) : incident,
+        incident.id === updated.id ? updated : incident,
       ),
     );
   };
 
-  const handleSeverityChange = (severity: Severity) => {
-    const previousSeverity = selectedIncident.severity;
-    if (previousSeverity === severity) return;
-
-    updateSelectedIncident((incident) => ({
-      ...incident,
-      severity,
-      updatedAt: new Date().toISOString(),
-      timeline: [
-        {
-          id: Date.now(),
-          type: "SEVERITY_CHANGED",
-          message: `관리자가 위험도를 ${severityLabel[severity]}(으)로 변경했습니다.`,
-          occurredAt: new Date().toISOString(),
-          metadata: { previousSeverity, severity },
-        },
-        ...incident.timeline,
-      ],
-    }));
-    setToast(`Incident #${selectedIncident.id} 위험도가 변경되었습니다.`);
+  const handleSeverityChange = async (severity: Severity) => {
+    if (!selectedIncident || selectedIncident.severity === severity) return;
+    setIsActionPending(true);
+    try {
+      updateIncident(await changeIncidentSeverity(selectedIncident.id, severity));
+      setToast(`Incident #${selectedIncident.id} 위험도가 변경되었습니다.`);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "위험도를 변경하지 못했습니다.");
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handleAddAgency = (agencyType: AgencyType) => {
-    updateSelectedIncident((incident) => ({
-      ...incident,
-      updatedAt: new Date().toISOString(),
-      agencies: [...incident.agencies, { agencyType, status: "ASSIGNED" }],
-      timeline: [
-        {
-          id: Date.now(),
-          type: "AGENCY_ASSIGNED",
-          message: `관리자가 ${agencyLabel[agencyType]}을 대응기관으로 추가했습니다.`,
-          occurredAt: new Date().toISOString(),
-          metadata: { agencyType, status: "ASSIGNED" },
-        },
-        ...incident.timeline,
-      ],
-    }));
-    setIsAgencyModalOpen(false);
-    setToast(`${agencyLabel[agencyType]}이 대응기관으로 배정되었습니다.`);
+  const handleAddAgency = async (agencyType: AgencyType) => {
+    if (!selectedIncident) return;
+    setIsActionPending(true);
+    try {
+      updateIncident(await addIncidentAgency(selectedIncident.id, agencyType));
+      setIsAgencyModalOpen(false);
+      setToast(`${agencyLabel[agencyType]}이 대응기관으로 배정되었습니다.`);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "기관을 추가하지 못했습니다.");
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handleCloseIncident = () => {
-    if (selectedIncident.status !== "RESOLVED") return;
+  const handleCloseIncident = async () => {
+    if (!selectedIncident || selectedIncident.status !== "RESOLVED") return;
+    setIsActionPending(true);
+    try {
+      updateIncident(await closeIncident(selectedIncident.id));
+      setToast(`Incident #${selectedIncident.id}이 종료되었습니다.`);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "Incident를 종료하지 못했습니다.");
+    } finally {
+      setIsActionPending(false);
+    }
+  };
 
-    updateSelectedIncident((incident) => ({
-      ...incident,
-      status: "CLOSED",
-      updatedAt: new Date().toISOString(),
-      timeline: [
-        {
-          id: Date.now(),
-          type: "INCIDENT_CLOSED",
-          message: "관리자가 사건을 종료했습니다.",
-          occurredAt: new Date().toISOString(),
-          metadata: {},
-        },
-        ...incident.timeline,
-      ],
-    }));
-    setToast(`Incident #${selectedIncident.id}이 종료되었습니다.`);
+  const handleLogout = async () => {
+    try { await logout(); } finally {
+      clearCurrentUser();
+      window.location.assign("/login");
+    }
   };
 
   const stats = {
     responding: incidents.filter((incident) => incident.status === "RESPONDING").length,
     critical: incidents.filter((incident) => incident.severity === "CRITICAL").length,
     resolved: incidents.filter((incident) => incident.status === "RESOLVED").length,
-    today: incidents.length,
+    today: incidents.filter(
+      (incident) => new Date(incident.createdAt).toDateString() === new Date().toDateString(),
+    ).length,
   };
+
+  if (!selectedIncident) {
+    return (
+      <div className="admin-shell">
+        <div className="agency-empty-page">
+          {isLoading ? "Incident 목록을 불러오는 중입니다." : errorMessage ?? "등록된 Incident가 없습니다."}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-shell">
@@ -246,14 +356,14 @@ export function AdminDashboardPage() {
 
         <div className="system-health">
           <div className="health-title"><Activity size={16} /><span>시스템 상태</span></div>
-          <div className="health-row"><span><i />API 서버</span><strong>정상</strong></div>
-          <div className="health-row"><span><i />SSE 연결</span><strong>정상</strong></div>
+          <div className="health-row"><span><i />API 서버</span><strong>{errorMessage ? "확인 필요" : "정상"}</strong></div>
+          <div className="health-row"><span><i />상세 SSE</span><strong>{isDetailLive ? "연결" : "재연결"}</strong></div>
         </div>
 
         <div className="admin-profile">
           <span className="profile-avatar"><UserRound size={18} /></span>
-          <div><strong>통합 관리자</strong><small>ADMIN</small></div>
-          <button type="button" aria-label="로그아웃"><LogOut size={17} /></button>
+          <div><strong>{adminName}</strong><small>ADMIN</small></div>
+          <button type="button" aria-label="로그아웃" onClick={() => void handleLogout()}><LogOut size={17} /></button>
         </div>
       </aside>
 
@@ -278,7 +388,7 @@ export function AdminDashboardPage() {
               <Menu size={21} />
             </button>
             <div>
-              <span>2026년 8월 20일 목요일</span>
+              <span>{formatToday()}</span>
               <h1>통합 상황판</h1>
             </div>
           </div>
@@ -301,7 +411,7 @@ export function AdminDashboardPage() {
               <h2>전체 사고 대응 현황</h2>
               <p>기관별 대응 상태를 확인하고 필요한 조치를 빠르게 이어가세요.</p>
             </div>
-            <button className="refresh-button" type="button" onClick={() => setLastSyncedAt(new Date())}>
+            <button className="refresh-button" type="button" onClick={() => void refreshIncidents()} disabled={isLoading}>
               <RefreshCw size={16} />
               지금 새로고침
             </button>
@@ -457,8 +567,9 @@ export function AdminDashboardPage() {
                   <label className={`severity-select severity-${selectedIncident.severity.toLowerCase()}`}>
                     <select
                       value={selectedIncident.severity}
-                      onChange={(event) => handleSeverityChange(event.target.value as Severity)}
+                      onChange={(event) => void handleSeverityChange(event.target.value as Severity)}
                       aria-label="선택한 사건 위험도 변경"
+                      disabled={isActionPending}
                     >
                       <option value="LOW">낮음</option>
                       <option value="MEDIUM">보통</option>
@@ -473,15 +584,15 @@ export function AdminDashboardPage() {
                     className="add-agency-button"
                     type="button"
                     onClick={() => setIsAgencyModalOpen(true)}
-                    disabled={availableAgencies.length === 0 || selectedIncident.status === "CLOSED"}
+                    disabled={isActionPending || availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}
                   >
                     <Plus size={16} />기관 추가
                   </button>
                   <button
                     className="close-incident-button"
                     type="button"
-                    onClick={handleCloseIncident}
-                    disabled={selectedIncident.status !== "RESOLVED"}
+                    onClick={() => void handleCloseIncident()}
+                    disabled={isActionPending || selectedIncident.status !== "RESOLVED"}
                     title={selectedIncident.status !== "RESOLVED" ? "해결된 사건만 종료할 수 있습니다." : "사건 종료"}
                   >
                     <Check size={16} />사건 종료
@@ -518,11 +629,11 @@ export function AdminDashboardPage() {
                   <span>{selectedIncident.timeline.length}개 기록</span>
                 </div>
                 <div className="admin-timeline">
-                  {selectedIncident.timeline.map((event, index) => (
+                  {[...selectedIncident.timeline].reverse().map((event, index, events) => (
                     <div className="admin-timeline-item" key={event.id}>
                       <div className="timeline-axis">
                         <span className={index === 0 ? "latest" : ""}><CircleDot size={14} /></span>
-                        {index < selectedIncident.timeline.length - 1 && <i />}
+                        {index < events.length - 1 && <i />}
                       </div>
                       <div className="timeline-copy">
                         <div><strong>{event.message}</strong><time>{formatTime(event.occurredAt)}</time></div>
@@ -547,7 +658,7 @@ export function AdminDashboardPage() {
             <p>현장 대응에 추가로 필요한 기관을 선택하세요. 선택 즉시 <strong>배정됨</strong> 상태로 참여합니다.</p>
             <div className="agency-options">
               {availableAgencies.map((agencyType) => (
-                <button key={agencyType} type="button" onClick={() => handleAddAgency(agencyType)}>
+                <button key={agencyType} type="button" onClick={() => void handleAddAgency(agencyType)} disabled={isActionPending}>
                   <span className={`agency-symbol agency-${agencyType.toLowerCase()}`}>{agencyLabel[agencyType].slice(0, 2)}</span>
                   <div><strong>{agencyLabel[agencyType]}</strong><small>{agencyType}</small></div>
                   <Plus size={18} />

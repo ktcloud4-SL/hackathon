@@ -31,8 +31,22 @@ import {
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { adminIncidents } from "../mocks/adminIncidents";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  clearCurrentUser,
+  getCurrentUser,
+  getDefaultPathForUser,
+  logout,
+  saveCurrentUser,
+} from "../api/auth";
+import {
+  changeMyAgencyStatus,
+  getMyAgencyIncidents,
+  requestIncidentSupport,
+} from "../api/agency";
+import { ApiError } from "../api/http";
+import { connectIncidentEvents, getIncident } from "../api/incidents";
+import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
   AgencyStatus,
@@ -141,15 +155,6 @@ const nextActionLabel: Partial<Record<AgencyStatus, string>> = {
   IN_PROGRESS: "대응 완료하기",
 };
 
-const statusMessage: Record<AgencyStatus, string> = {
-  ASSIGNED: "사건을 대응기관에 배정했습니다.",
-  RECEIVED: "사건을 접수했습니다.",
-  DISPATCHED: "현장으로 출동을 시작했습니다.",
-  ARRIVED: "현장에 도착했습니다.",
-  IN_PROGRESS: "현장 조치를 시작했습니다.",
-  COMPLETED: "현장 대응을 완료했습니다.",
-};
-
 const incidentStatusLabel: Record<IncidentStatus, string> = {
   OPEN: "접수",
   RESPONDING: "대응 중",
@@ -195,14 +200,12 @@ export function AgencyDashboardPage() {
   const agencyType = getAgencyTypeFromPath();
   const config = agencyConfigs[agencyType];
   const AgencyIcon = config.icon;
-  const [incidents, setIncidents] = useState<AdminIncident[]>(adminIncidents);
+  const [incidents, setIncidents] = useState<AdminIncident[]>([]);
   const agencyIncidents = useMemo(
     () => incidents.filter((incident) => incident.agencies.some((agency) => agency.agencyType === agencyType)),
     [agencyType, incidents],
   );
-  const [selectedId, setSelectedId] = useState(
-    agencyIncidents.find((incident) => incident.status !== "CLOSED")?.id ?? agencyIncidents[0]?.id ?? 42,
-  );
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AgencyStatus | "ALL">("ALL");
   const [supportModalOpen, setSupportModalOpen] = useState(false);
@@ -211,11 +214,106 @@ export function AgencyDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
+  const [operatorName, setOperatorName] = useState(config.operator);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [isDetailLive, setIsDetailLive] = useState(false);
 
   useEffect(() => {
-    const interval = window.setInterval(() => setLastSyncedAt(new Date()), 5000);
-    return () => window.clearInterval(interval);
+    void getCurrentUser()
+      .then((user) => {
+        saveCurrentUser(user);
+        if (user.role !== "AGENCY" || !user.agencyType) {
+          window.location.replace(getDefaultPathForUser(user));
+          return;
+        }
+        if (user.agencyType !== agencyType) {
+          window.location.replace(getDefaultPathForUser(user));
+          return;
+        }
+        setOperatorName(user.name);
+        setIsAuthorized(true);
+      })
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+          return;
+        }
+        setErrorMessage(error instanceof Error ? error.message : "기관 인증을 확인하지 못했습니다.");
+        setIsLoading(false);
+      });
+  }, [agencyType]);
+
+  const refreshIncidents = useCallback(async () => {
+    try {
+      const response = await getMyAgencyIncidents();
+      const details = await Promise.all(response.items.map((item) => getIncident(item.id)));
+      setIncidents(details);
+      setSelectedId((current) =>
+        details.some((item) => item.id === current)
+          ? current
+          : details[0]?.id ?? null,
+      );
+      setLastSyncedAt(new Date());
+      setErrorMessage(null);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+      setErrorMessage(error instanceof Error ? error.message : "기관 Incident 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    void refreshIncidents();
+    const interval = window.setInterval(() => void refreshIncidents(), 5000);
+    return () => window.clearInterval(interval);
+  }, [isAuthorized, refreshIncidents]);
+
+  useEffect(() => {
+    if (!isAuthorized || selectedId === null) return;
+    const incidentId = selectedId;
+    const source = connectIncidentEvents(incidentId, {
+      onEvent: (event) => setIncidents((current) =>
+        current.map((incident) =>
+          incident.id === incidentId
+            ? applyIncidentStreamEvent(incident, event)
+            : incident,
+        )
+      ),
+      onOpen: () => {
+        setIsDetailLive(true);
+        void getIncident(incidentId)
+          .then((detail) => setIncidents((current) =>
+            current.map((incident) => incident.id === detail.id ? detail : incident)
+          ))
+          .catch((error) => {
+            if (error instanceof ApiError && error.status === 401) {
+              window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+            }
+          });
+      },
+      onError: () => {
+        setIsDetailLive(false);
+        void getCurrentUser().catch((error) => {
+          if (error instanceof ApiError && error.status === 401) {
+            window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+          }
+        });
+      },
+    });
+
+    return () => {
+      source.close();
+      setIsDetailLive(false);
+    };
+  }, [isAuthorized, selectedId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -262,87 +360,53 @@ export function AgencyDashboardPage() {
     ).length,
   };
 
-  const updateSelectedIncident = (updater: (incident: AdminIncident) => AdminIncident) => {
+  const updateIncident = (updated: AdminIncident) => {
     setIncidents((current) =>
-      current.map((incident) => (incident.id === selectedIncident.id ? updater(incident) : incident)),
+      current.map((incident) => (incident.id === updated.id ? updated : incident)),
     );
   };
 
-  const handleNextStatus = () => {
+  const handleNextStatus = async () => {
     if (!selectedIncident || !nextStatus) return;
-    const now = new Date().toISOString();
-
-    updateSelectedIncident((incident) => {
-      const nextAgencies = incident.agencies.map((agency) =>
-        agency.agencyType === agencyType ? { ...agency, status: nextStatus } : agency,
-      );
-      const allCompleted = nextAgencies.every((agency) => agency.status === "COMPLETED");
-      const incidentStatus: IncidentStatus = allCompleted
-        ? "RESOLVED"
-        : nextStatus === "RECEIVED" && incident.status === "OPEN"
-          ? "RESPONDING"
-          : incident.status;
-
-      return {
-        ...incident,
-        status: incidentStatus,
-        agencies: nextAgencies,
-        updatedAt: now,
-        timeline: [
-          {
-            id: Date.now(),
-            type: "AGENCY_STATUS_CHANGED",
-            message: `${config.name}이 ${statusMessage[nextStatus]}`,
-            occurredAt: now,
-            metadata: { agencyType, previousStatus: myStatus, status: nextStatus, incidentStatus },
-          },
-          ...incident.timeline,
-        ],
-      };
-    });
-    setToast(`${agencyStatusLabel[nextStatus]} 상태로 변경되었습니다.`);
+    setIsActionPending(true);
+    try {
+      updateIncident(await changeMyAgencyStatus(selectedIncident.id, agencyType, nextStatus));
+      setToast(`${agencyStatusLabel[nextStatus]} 상태로 변경되었습니다.`);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "기관 상태를 변경하지 못했습니다.");
+    } finally {
+      setIsActionPending(false);
+    }
   };
 
-  const handleSupportRequest = (event: FormEvent<HTMLFormElement>) => {
+  const handleSupportRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!supportAgency || !supportReason.trim() || !selectedIncident) return;
-    const now = new Date().toISOString();
     const targetConfig = agencyConfigs[supportAgency];
+    setIsActionPending(true);
+    try {
+      await requestIncidentSupport(selectedIncident.id, supportAgency, supportReason.trim());
+      updateIncident(await getIncident(selectedIncident.id));
+      setToast(`${targetConfig.name} 지원 요청이 완료되었습니다.`);
+      setSupportAgency("");
+      setSupportReason("");
+      setSupportModalOpen(false);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "지원 요청을 처리하지 못했습니다.");
+    } finally {
+      setIsActionPending(false);
+    }
+  };
 
-    updateSelectedIncident((incident) => ({
-      ...incident,
-      updatedAt: now,
-      agencies: [...incident.agencies, { agencyType: supportAgency, status: "ASSIGNED" }],
-      timeline: [
-        {
-          id: Date.now() + 1,
-          type: "AGENCY_ASSIGNED",
-          message: `${targetConfig.name}이 추가 대응기관으로 배정되었습니다.`,
-          occurredAt: now,
-          metadata: { agencyType: supportAgency, status: "ASSIGNED" },
-        },
-        {
-          id: Date.now(),
-          type: "SUPPORT_REQUESTED",
-          message: `${config.name}이 ${targetConfig.name} 지원을 요청했습니다.`,
-          occurredAt: now,
-          metadata: {
-            requesterAgencyType: agencyType,
-            targetAgencyType: supportAgency,
-            reason: supportReason.trim(),
-          },
-        },
-        ...incident.timeline,
-      ],
-    }));
-    setToast(`${targetConfig.name} 지원 요청이 완료되었습니다.`);
-    setSupportAgency("");
-    setSupportReason("");
-    setSupportModalOpen(false);
+  const handleLogout = async () => {
+    try { await logout(); } finally {
+      clearCurrentUser();
+      window.location.assign("/login");
+    }
   };
 
   if (!selectedIncident) {
-    return <div className="agency-empty-page">배정된 Incident가 없습니다.</div>;
+    return <div className="agency-empty-page">{isLoading ? "배정된 Incident를 불러오는 중입니다." : errorMessage ?? "배정된 Incident가 없습니다."}</div>;
   }
 
   return (
@@ -374,8 +438,8 @@ export function AgencyDashboardPage() {
 
         <div className="agency-profile">
           <span><UserRound size={17} /></span>
-          <div><strong>{config.operator}</strong><small>{agencyType} OPERATOR</small></div>
-          <button type="button" aria-label="로그아웃"><LogOut size={16} /></button>
+          <div><strong>{operatorName}</strong><small>{agencyType} OPERATOR</small></div>
+          <button type="button" onClick={() => void handleLogout()} aria-label="로그아웃"><LogOut size={16} /></button>
         </div>
       </aside>
 
@@ -390,21 +454,12 @@ export function AgencyDashboardPage() {
           <div className="agency-header-actions">
             <label className="agency-switcher">
               <AgencyIcon size={15} />
-              <select
-                value={agencyType}
-                onChange={(event) => {
-                  const target = agencyConfigs[event.target.value as AgencyType];
-                  window.location.href = `/agency/${target.slug}`;
-                }}
-                aria-label="Mock 기관 화면 전환"
-              >
-                {(Object.keys(agencyConfigs) as AgencyType[]).map((type) => (
-                  <option key={type} value={type}>{agencyConfigs[type].name}</option>
-                ))}
+              <select value={agencyType} aria-label="로그인 기관" disabled>
+                <option value={agencyType}>{config.name}</option>
               </select>
               <ChevronDown size={14} />
             </label>
-            <div className="agency-sync"><span><i />실시간 연결</span><small>{formatTime(lastSyncedAt.toISOString())} 동기화</small></div>
+            <div className="agency-sync"><span><i />{isDetailLive ? "실시간 연결" : "재연결 중"}</span><small>{formatTime(lastSyncedAt.toISOString())} 동기화</small></div>
             <button className="agency-bell" type="button" aria-label="알림"><Bell size={18} /><i /></button>
           </div>
         </header>
@@ -412,7 +467,7 @@ export function AgencyDashboardPage() {
         <main className="agency-main" id="agency-overview">
           <section className="agency-welcome">
             <div><span><ShieldCheck size={15} />오늘의 공동대응 현황</span><h2>{config.name}에 배정된 사건입니다.</h2><p>신규 사건을 접수하고 현장 대응 단계를 실시간으로 공유해 주세요.</p></div>
-            <button type="button" onClick={() => setLastSyncedAt(new Date())}><RefreshCw size={16} />목록 새로고침</button>
+            <button type="button" onClick={() => void refreshIncidents()} disabled={isLoading}><RefreshCw size={16} />목록 새로고침</button>
           </section>
 
           <section className="agency-stats" aria-label="기관 대응 현황">
@@ -473,14 +528,14 @@ export function AgencyDashboardPage() {
                   ))}
                 </div>
                 {nextStatus ? (
-                  <button className="next-status-button" type="button" onClick={handleNextStatus}><span><Crosshair size={17} />{nextActionLabel[myStatus]}</span><ChevronRight size={18} /></button>
+                  <button className="next-status-button" type="button" onClick={() => void handleNextStatus()} disabled={isActionPending}><span><Crosshair size={17} />{nextActionLabel[myStatus]}</span><ChevronRight size={18} /></button>
                 ) : (
                   <div className="response-complete"><CheckCircle2 size={18} />이 기관의 현장 대응이 완료되었습니다.</div>
                 )}
               </section>
 
               <section className="agency-detail-section joint-agencies">
-                <div className="agency-section-heading"><div><Building2 size={16} /><h4>공동 대응기관</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || selectedIncident.status === "CLOSED"}><MessageSquarePlus size={15} />추가 기관 요청</button></div>
+                <div className="agency-section-heading"><div><Building2 size={16} /><h4>공동 대응기관</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}><MessageSquarePlus size={15} />추가 기관 요청</button></div>
                 <div className="joint-agency-grid">
                   {selectedIncident.agencies.map((agency) => {
                     const itemConfig = agencyConfigs[agency.agencyType];
@@ -493,7 +548,7 @@ export function AgencyDashboardPage() {
               <section className="agency-detail-section" id="agency-timeline">
                 <div className="agency-section-heading"><div><Clock3 size={16} /><h4>Timeline</h4></div><span>{selectedIncident.timeline.length}개 기록</span></div>
                 <div className="agency-timeline">
-                  {selectedIncident.timeline.map((item, index) => (
+                  {[...selectedIncident.timeline].reverse().map((item, index) => (
                     <div className="agency-timeline-item" key={item.id}><div><span className={index === 0 ? "latest" : ""}><CircleDot size={13} /></span>{index < selectedIncident.timeline.length - 1 && <i />}</div><div><div><strong>{item.message}</strong><time>{formatTime(item.occurredAt)}</time></div>{item.type === "SUPPORT_REQUESTED" && typeof item.metadata.reason === "string" && <p>요청 사유 · {item.metadata.reason}</p>}</div></div>
                   ))}
                 </div>
@@ -511,7 +566,7 @@ export function AgencyDashboardPage() {
             <label className="support-field"><span>지원 기관 <b>*</b></span><div><select value={supportAgency} onChange={(event) => setSupportAgency(event.target.value as AgencyType)} required><option value="">기관을 선택하세요</option>{availableAgencies.map((type) => <option key={type} value={type}>{agencyConfigs[type].name}</option>)}</select><ChevronDown size={15} /></div></label>
             <label className="support-field"><span>요청 사유 <b>*</b></span><textarea value={supportReason} onChange={(event) => setSupportReason(event.target.value)} placeholder="예: 현장에서 가스 냄새가 발견되었습니다." maxLength={300} required /><small>{supportReason.length} / 300</small></label>
             <div className="support-notice"><AlertTriangle size={15} /><span>요청 즉시 대상 기관이 <strong>배정됨</strong> 상태로 추가되고 Timeline에 기록됩니다.</span></div>
-            <div className="support-modal-actions"><button type="button" onClick={() => setSupportModalOpen(false)}>취소</button><button type="submit" disabled={!supportAgency || !supportReason.trim()}><MessageSquarePlus size={16} />지원 요청하기</button></div>
+            <div className="support-modal-actions"><button type="button" onClick={() => setSupportModalOpen(false)}>취소</button><button type="submit" disabled={isActionPending || !supportAgency || !supportReason.trim()}><MessageSquarePlus size={16} />{isActionPending ? "요청 중..." : "지원 요청하기"}</button></div>
           </form>
         </div>
       )}

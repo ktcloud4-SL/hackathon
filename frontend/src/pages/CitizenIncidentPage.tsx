@@ -1,5 +1,4 @@
 import {
-  Activity,
   ArrowLeft,
   BellRing,
   Building2,
@@ -23,16 +22,12 @@ import {
   getIncident,
   getIncidentTimeline,
 } from "../api/incidents";
+import { getCurrentUser } from "../api/auth";
+import { ApiError } from "../api/http";
 import { CitizenHeader } from "../components/CitizenHeader";
-import {
-  createMockIncidentDetail,
-  createMockIncidentFromReportItem,
-  loadReportResult,
-} from "../mocks/citizenIncident";
+import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type {
   IncidentDetail,
-  IncidentStreamEvent,
-  TimelineEvent,
 } from "../types/incident";
 import type {
   AgencyStatus,
@@ -40,7 +35,6 @@ import type {
   Category,
   IncidentStatus,
   Severity,
-  MyReportItem,
 } from "../types/report";
 import "./citizen-flow.css";
 
@@ -93,25 +87,12 @@ const categoryLabels: Record<Category, string> = {
   GAS_RISK: "가스 위험",
 };
 
-type ConnectionState = "connecting" | "live" | "retrying" | "demo";
+type ConnectionState = "connecting" | "live" | "retrying" | "error";
 
 function parseIncidentId() {
   const segment = window.location.pathname.split("/").filter(Boolean).at(-1);
   const incidentId = Number(segment);
   return Number.isFinite(incidentId) && incidentId > 0 ? incidentId : 42;
-}
-
-function loadSelectedReport(incidentId: number): MyReportItem | null {
-  const stored = sessionStorage.getItem("onereport:selected-report");
-  if (!stored) return null;
-
-  try {
-    const report = JSON.parse(stored) as MyReportItem;
-    return report.incident.id === incidentId ? report : null;
-  } catch {
-    sessionStorage.removeItem("onereport:selected-report");
-    return null;
-  }
 }
 
 function formatDateTime(value: string) {
@@ -130,80 +111,18 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
-function applyStreamEvent(
-  current: IncidentDetail,
-  event: IncidentStreamEvent,
-): IncidentDetail {
-  if (event.incidentId !== current.id) return current;
-
-  let agencies = current.agencies;
-  let status = event.data.incidentStatus ?? current.status;
-  let severity = event.data.severity ?? current.severity;
-
-  if (event.type === "AGENCY_ASSIGNED") {
-    const agencyType = event.data.targetAgencyType ?? event.data.agencyType;
-    if (agencyType && !agencies.some((agency) => agency.agencyType === agencyType)) {
-      agencies = [
-        ...agencies,
-        {
-          agencyType,
-          status: "ASSIGNED",
-          assignedAt: event.occurredAt,
-          updatedAt: event.occurredAt,
-        },
-      ];
-    }
-  }
-
-  if (
-    event.type === "AGENCY_STATUS_CHANGED" &&
-    event.data.agencyType &&
-    event.data.status
-  ) {
-    agencies = agencies.map((agency) =>
-      agency.agencyType === event.data.agencyType
-        ? { ...agency, status: event.data.status!, updatedAt: event.occurredAt }
-        : agency,
-    );
-  }
-
-  if (event.type === "INCIDENT_RESOLVED") status = "RESOLVED";
-  if (event.type === "INCIDENT_CLOSED") status = "CLOSED";
-  if (event.type === "SEVERITY_CHANGED" && event.data.severity) {
-    severity = event.data.severity;
-  }
-
-  const timeline = event.timelineEvent &&
-    !current.timeline.some((item) => item.id === event.timelineEvent!.id)
-    ? [...current.timeline, event.timelineEvent]
-    : current.timeline;
-
-  return {
-    ...current,
-    agencies,
-    status,
-    severity,
-    timeline,
-    updatedAt: event.occurredAt,
-  };
-}
-
 function connectionContent(state: ConnectionState) {
   if (state === "live") return { label: "실시간 연결됨", icon: Wifi };
   if (state === "retrying") return { label: "재연결 중", icon: RefreshCw };
   if (state === "connecting") return { label: "연결 확인 중", icon: Radio };
-  return { label: "데모 데이터", icon: WifiOff };
+  return { label: "연결 오류", icon: WifiOff };
 }
 
 export function CitizenIncidentPage() {
   const incidentId = useMemo(parseIncidentId, []);
-  const [incident, setIncident] = useState<IncidentDetail>(() => {
-    const selectedReport = loadSelectedReport(incidentId);
-    return selectedReport
-      ? createMockIncidentFromReportItem(selectedReport)
-      : { ...createMockIncidentDetail(loadReportResult()), id: incidentId };
-  });
+  const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let source: EventSource | undefined;
@@ -218,6 +137,7 @@ export function CitizenIncidentPage() {
 
       if (!disposed) {
         setIncident({ ...detail, timeline: timeline.items });
+        setErrorMessage(null);
       }
     };
 
@@ -226,17 +146,37 @@ export function CitizenIncidentPage() {
         if (disposed) return;
 
         source = connectIncidentEvents(incidentId, {
-          onEvent: (event) => setIncident((current) => applyStreamEvent(current, event)),
+          onEvent: (event) => setIncident((current) =>
+            current ? applyIncidentStreamEvent(current, event) : current
+          ),
           onOpen: () => {
             setConnection("live");
             if (hasOpened) void synchronize();
             hasOpened = true;
           },
-          onError: () => setConnection("retrying"),
+          onError: () => {
+            setConnection("retrying");
+            void getCurrentUser().catch((error) => {
+              if (error instanceof ApiError && error.status === 401) {
+                window.location.replace(`/login?next=${encodeURIComponent(`/incidents/${incidentId}`)}`);
+              }
+            });
+          },
         });
       })
-      .catch(() => {
-        if (!disposed) setConnection("demo");
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.replace(`/login?next=${encodeURIComponent(`/incidents/${incidentId}`)}`);
+          return;
+        }
+        if (!disposed) {
+          setConnection("error");
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Incident 정보를 불러오지 못했습니다.",
+          );
+        }
       });
 
     return () => {
@@ -245,11 +185,32 @@ export function CitizenIncidentPage() {
     };
   }, [incidentId]);
 
+  if (!incident) {
+    return (
+      <div className="app-shell citizen-flow-shell">
+        <CitizenHeader active="my-reports" />
+        <main className="citizen-flow-main incident-main">
+          <section className="flow-card">
+            {errorMessage ? (
+              <>
+                <h1>상황 정보를 불러오지 못했습니다.</h1>
+                <p>{errorMessage}</p>
+                <button type="button" onClick={() => window.location.reload()}>다시 시도</button>
+              </>
+            ) : (
+              <><h1>Incident 정보를 불러오는 중입니다.</h1><p>잠시만 기다려 주세요.</p></>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   const statusDetail = incidentStatusLabels[incident.status];
   const connectionDetail = connectionContent(connection);
   const ConnectionIcon = connectionDetail.icon;
 
-  const progress = useMemo(() => {
+  const progress = (() => {
     if (incident.agencies.length === 0) return 0;
     const total = incident.agencies.reduce(
       (sum, agency) => sum + agencyStatusOrder.indexOf(agency.status),
@@ -258,53 +219,9 @@ export function CitizenIncidentPage() {
     return Math.round(
       (total / (incident.agencies.length * (agencyStatusOrder.length - 1))) * 100,
     );
-  }, [incident.agencies]);
+  })();
 
-  const sortedTimeline = useMemo(
-    () => [...incident.timeline].sort((a, b) => b.id - a.id),
-    [incident.timeline],
-  );
-
-  const advanceDemoStatus = () => {
-    setIncident((current) => {
-      const target = current.agencies.find((agency) => agency.status !== "COMPLETED");
-      if (!target) return current;
-
-      const currentIndex = agencyStatusOrder.indexOf(target.status);
-      const nextStatus = agencyStatusOrder[currentIndex + 1];
-      const occurredAt = new Date().toISOString();
-      const agencies = current.agencies.map((agency) =>
-        agency.agencyType === target.agencyType
-          ? { ...agency, status: nextStatus, updatedAt: occurredAt }
-          : agency,
-      );
-      const completed = agencies.every((agency) => agency.status === "COMPLETED");
-      const nextIncidentStatus: IncidentStatus = completed ? "RESOLVED" : "RESPONDING";
-      const nextId = Math.max(0, ...current.timeline.map((item) => item.id)) + 1;
-      const timelineEvent: TimelineEvent = {
-        id: nextId,
-        type: completed ? "INCIDENT_RESOLVED" : "AGENCY_STATUS_CHANGED",
-        message: completed
-          ? "모든 참여 기관의 대응이 완료되었습니다."
-          : `${agencyLabels[target.agencyType].label} 상태가 '${agencyStatusLabels[nextStatus]}'(으)로 변경되었습니다.`,
-        occurredAt,
-        metadata: {
-          agencyType: target.agencyType,
-          previousStatus: target.status,
-          status: nextStatus,
-          incidentStatus: nextIncidentStatus,
-        },
-      };
-
-      return {
-        ...current,
-        agencies,
-        status: nextIncidentStatus,
-        timeline: [...current.timeline, timelineEvent],
-        updatedAt: occurredAt,
-      };
-    });
-  };
+  const sortedTimeline = [...incident.timeline].sort((a, b) => b.id - a.id);
 
   return (
     <div className="app-shell citizen-flow-shell">
@@ -389,21 +306,6 @@ export function CitizenIncidentPage() {
                 })}
               </div>
 
-              {connection === "demo" && (
-                <div className="demo-control">
-                  <div>
-                    <span><Activity size={17} /> 백엔드 연결 전 데모</span>
-                    <p>버튼을 눌러 SSE로 수신될 기관 상태 변경을 미리 확인할 수 있어요.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={advanceDemoStatus}
-                    disabled={incident.status === "RESOLVED" || incident.status === "CLOSED"}
-                  >
-                    상태 한 단계 진행 <ChevronRight size={17} />
-                  </button>
-                </div>
-              )}
             </section>
 
             <section className="flow-card timeline-card">

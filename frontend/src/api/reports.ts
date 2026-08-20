@@ -15,21 +15,12 @@ export async function createReport(
   body.append("longitude", String(input.longitude));
 
   if (input.image) body.append("image", input.image);
-  if (input.categoryHint) body.append("categoryHint", input.categoryHint);
+  input.categories.forEach((category) => body.append("categories", category));
 
-  const response = await fetch("/api/reports", {
+  return requestJson<CreateReportResponse>("/api/reports", {
     method: "POST",
-    credentials: "include",
     body,
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message ?? "신고를 접수하지 못했습니다.");
-  }
-
-  return data as CreateReportResponse;
 }
 
 export function getMyReports(): Promise<MyReportsResponse> {

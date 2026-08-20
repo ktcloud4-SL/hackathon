@@ -13,13 +13,11 @@ import {
   X,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
+import { ApiError } from "../api/http";
+import { createReport } from "../api/reports";
 import { CitizenHeader } from "../components/CitizenHeader";
 import { CategoryHintModal } from "../components/CategoryHintModal";
-import {
-  classifyMockCategories,
-  createMockReportResult,
-  saveReportResult,
-} from "../mocks/citizenIncident";
+import { saveReportResult } from "../state/reportResult";
 import type { Category } from "../types/report";
 
 interface Coordinates {
@@ -59,7 +57,8 @@ export function ReportPage() {
   const [isLocating, setIsLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAddresses = useMemo(() => {
@@ -115,6 +114,12 @@ export function ReportPage() {
     const selectedImage = event.target.files?.[0];
     if (!selectedImage) return;
 
+    if (selectedImage.size > 10 * 1024 * 1024) {
+      setNotice("이미지는 10MB 이하만 첨부할 수 있습니다.");
+      event.target.value = "";
+      return;
+    }
+
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImage(selectedImage);
     setImagePreview(URL.createObjectURL(selectedImage));
@@ -127,19 +132,35 @@ export function ReportPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const completeMockAnalysis = (categoryHint?: Category) => {
+  const submitReport = async () => {
     if (!coordinates) return;
-    const result = createMockReportResult({
-      description: description.trim(),
-      address,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      image: image ?? undefined,
-      categoryHint,
-    });
+    setIsSubmitting(true);
+    setNotice(null);
 
-    saveReportResult(result);
-    window.location.assign("/report/analysis");
+    try {
+      const result = await createReport({
+        description: description.trim(),
+        address,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        image: image ?? undefined,
+        categories: selectedCategories,
+      });
+      saveReportResult(result);
+      window.location.assign("/report/analysis");
+    } catch (error) {
+      setIsCategoryModalOpen(false);
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.assign("/login?next=%2F");
+        return;
+      }
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -155,14 +176,8 @@ export function ReportPage() {
       return;
     }
 
-    if (classifyMockCategories(description.trim()).length === 0) {
-      setSelectedCategory(null);
-      setIsCategoryModalOpen(true);
-      setNotice(null);
-      return;
-    }
-
-    completeMockAnalysis();
+    setIsCategoryModalOpen(true);
+    setNotice(null);
   };
 
   return (
@@ -355,8 +370,8 @@ export function ReportPage() {
                 <ShieldCheck size={18} />
                 입력한 정보는 사고 대응 목적으로만 사용됩니다.
               </div>
-              <button className="submit-button" type="submit">
-                신고 내용 분석하기
+              <button className="submit-button" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "신고 접수 중..." : "사고 유형 선택하기"}
                 <ChevronRight size={20} />
               </button>
             </div>
@@ -400,7 +415,7 @@ export function ReportPage() {
               <ol>
                 <li className="active">
                   <span>1</span>
-                  <div><strong>상황 분석</strong><small>신고 내용을 확인해요</small></div>
+                  <div><strong>유형 확인</strong><small>사고 유형을 선택해요</small></div>
                 </li>
                 <li>
                   <span>2</span>
@@ -423,12 +438,16 @@ export function ReportPage() {
 
       {isCategoryModalOpen && (
         <CategoryHintModal
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
+          selected={selectedCategories}
+          onToggle={(category) => setSelectedCategories((current) =>
+            current.includes(category)
+              ? current.filter((item) => item !== category)
+              : [...current, category]
+          )}
           onClose={() => setIsCategoryModalOpen(false)}
           onConfirm={() => {
-            if (!selectedCategory) return;
-            completeMockAnalysis(selectedCategory);
+            if (selectedCategories.length === 0 || isSubmitting) return;
+            void submitReport();
           }}
         />
       )}
