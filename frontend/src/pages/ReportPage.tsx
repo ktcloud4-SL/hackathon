@@ -496,7 +496,7 @@ export function ReportPage() {
         />
       )}
 
-      {isAnalyzing && <AiAnalysisModal />}
+      {isAnalyzing && <AiAnalysisModal hasAttachment={image !== null} />}
     </div>
   );
 }

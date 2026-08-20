@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ANALYSIS_STAGE_INTERVAL_MS,
+  MIN_ANALYSIS_DISPLAY_MS,
   getAnalysisHighlights,
+  getAnalysisModalCopy,
+  getAnalysisStageLabels,
+  getAnalysisStepState,
   hasUsableRecommendation,
   withMinimumDuration,
 } from "../src/utils/reportAnalysis.ts";
@@ -15,7 +20,11 @@ test("analysis and minimum spinner duration run concurrently", async () => {
   });
   let settled = false;
 
-  const resultPromise = withMinimumDuration(Promise.resolve("analyzed"), 2200, delay);
+  const resultPromise = withMinimumDuration(
+    Promise.resolve("analyzed"),
+    MIN_ANALYSIS_DISPLAY_MS,
+    delay,
+  );
   resultPromise.then(() => {
     settled = true;
   });
@@ -28,6 +37,45 @@ test("analysis and minimum spinner duration run concurrently", async () => {
 });
 
 
+test("the default demo spinner duration is five seconds", async () => {
+  let requestedDelay = 0;
+  const delay = (milliseconds: number) => {
+    requestedDelay = milliseconds;
+    return Promise.resolve();
+  };
+
+  assert.equal(
+    await withMinimumDuration(Promise.resolve("analyzed"), undefined, delay),
+    "analyzed",
+  );
+  assert.equal(requestedDelay, 5000);
+});
+
+
+test("spinner waits for a slow analysis after the minimum duration finishes", async () => {
+  let releaseAnalysis: ((value: string) => void) | undefined;
+  const analysis = new Promise<string>((resolve) => {
+    releaseAnalysis = resolve;
+  });
+  let settled = false;
+
+  const resultPromise = withMinimumDuration(
+    analysis,
+    MIN_ANALYSIS_DISPLAY_MS,
+    () => Promise.resolve(),
+  );
+  resultPromise.then(() => {
+    settled = true;
+  });
+  await Promise.resolve();
+
+  assert.equal(settled, false);
+  assert.ok(releaseAnalysis);
+  releaseAnalysis("slow analysis");
+  assert.equal(await resultPromise, "slow analysis");
+});
+
+
 test("analysis failure still waits for the minimum spinner duration", async () => {
   let releaseDelay: (() => void) | undefined;
   const delay = () => new Promise<void>((resolve) => {
@@ -36,7 +84,7 @@ test("analysis failure still waits for the minimum spinner duration", async () =
 
   const resultPromise = withMinimumDuration(
     Promise.reject(new Error("analysis unavailable")),
-    2200,
+    MIN_ANALYSIS_DISPLAY_MS,
     delay,
   );
   const rejection = assert.rejects(resultPromise, /analysis unavailable/);
@@ -45,6 +93,40 @@ test("analysis failure still waits for the minimum spinner duration", async () =
   assert.ok(releaseDelay);
   releaseDelay();
   await rejection;
+});
+
+
+test("analysis stages progress in order and attachment wording stays accurate", () => {
+  assert.equal(ANALYSIS_STAGE_INTERVAL_MS, 1000);
+  assert.deepEqual(getAnalysisStageLabels(false), [
+    "신고 정보 확인",
+    "AI 신고내용 분석",
+    "위험 요소 분석",
+    "사고 유형 자동 분류",
+    "대응기관 추천",
+  ]);
+  assert.deepEqual(getAnalysisStageLabels(true).slice(0, 2), [
+    "신고 정보 확인",
+    "AI 사진 분석",
+  ]);
+  assert.deepEqual(
+    [0, 1, 2, 3, 4].map((step) => getAnalysisStepState(step, 2)),
+    ["complete", "complete", "active", "pending", "pending"],
+  );
+});
+
+
+test("analysis modal copy clearly distinguishes reports with photos", () => {
+  assert.deepEqual(getAnalysisModalCopy(true), {
+    title: "AI가 신고 내용과 사진을 분석하고 있어요",
+    description:
+      "신고 내용과 첨부 자료를 바탕으로 위험 요소와 필요한 대응기관을 확인합니다.",
+  });
+  assert.deepEqual(getAnalysisModalCopy(false), {
+    title: "AI가 신고 내용을 분석하고 있어요",
+    description:
+      "신고 내용을 바탕으로 위험 요소와 필요한 대응기관을 확인합니다.",
+  });
 });
 
 

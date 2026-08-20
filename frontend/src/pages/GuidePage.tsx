@@ -63,7 +63,7 @@ export function GuidePage() {
           <div className="guide-hero-copy">
             <span className="guide-eyebrow"><BadgeCheck size={16} /> OneReport 이용안내</span>
             <h1><span className="guide-hero-question">어디에 신고할지 고민하지 마세요.</span><span>한 번의 신고를 필요한 기관에 연결합니다.</span></h1>
-            <p>현재 시연에서는 상황과 위치, 선택한 사고 유형을 바탕으로 대표 기관을 연결합니다. 장기적으로는 공공기관·공기업·지자체·민원 채널까지 하나의 Incident로 잇는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
+            <p>현재 서비스에서는 신고 내용을 분석하고, 사용자가 확인한 사고 유형을 바탕으로 필요한 대표 기관을 연결합니다. 장기적으로는 공공기관·공기업·지자체·민원 채널까지 하나의 Incident로 잇는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
             <div className="guide-hero-actions">
               <a href="/#report-form">지금 신고하기 <ArrowRight size={18} /></a>
               <a className="secondary" href="/reports/me">내 신고 확인</a>
@@ -111,13 +111,13 @@ export function GuidePage() {
             <span className="guide-section-icon"><Building2 size={21} /></span>
             <span className="guide-small-title">서비스 범위</span>
             <h2>OneReport는 기관을 대체하지 않고<br />공동대응을 연결합니다.</h2>
-            <p>현재 OneReport는 서비스 시연 환경으로, 실제 기관으로 신고가 접수되지는 않습니다.</p>
+            <p>현재 OneReport를 통한 신고는 실제 기관으로 접수되지 않습니다.</p>
             <div className="emergency-number-callout"><CircleAlert size={19} /><span><strong>생명이 위험하면 즉시 112·119</strong>OneReport 화면을 기다리지 말고 먼저 전화하세요.</span></div>
           </div>
 
           <div className="guide-scope-cards">
             <article className="scope-does">
-              <span><Check size={17} /> 현재 시연 범위</span>
+              <span><Check size={17} /> 현재 제공 범위</span>
               <ul>
                 <li>복합 상황을 하나의 Incident로 관리</li>
                 <li>상황에 따른 필요 기관 배정</li>
@@ -140,7 +140,7 @@ export function GuidePage() {
         <section className="guide-section guide-agencies" aria-labelledby="guide-agencies-title">
           <div className="guide-section-heading inline">
             <div><span>JOINT RESPONSE</span><h2 id="guide-agencies-title">상황에 맞는 기관으로 자동 연결해요.</h2></div>
-            <p>아래는 현재 시연에서 연결되는 대표 기관이며, 상황에 필요한 기관만 배정됩니다.</p>
+            <p>아래는 현재 연결 대상으로 안내하는 대표 기관이며, 상황에 필요한 기관만 배정됩니다.</p>
           </div>
           <div className="guide-agency-grid">
             {agencies.map((agency) => {
@@ -182,7 +182,7 @@ export function GuidePage() {
           <div className="guide-faq-list">
             <details open>
               <summary>사고 유형을 정확히 모르겠어요.<ChevronDown size={17} /></summary>
-              <p>괜찮습니다. 보이는 상황을 구체적으로 작성하고 가장 가까운 사고 유형을 선택하면, OneReport가 선택 정보를 바탕으로 필요한 기관을 연결합니다.</p>
+              <p>괜찮습니다. 신고 내용을 입력하면 AI가 사고 유형을 추천하고, 필요하면 직접 확인하거나 수정할 수 있어요. OneReport는 확인된 사고 유형을 바탕으로 필요한 기관을 연결합니다.</p>
             </details>
             <details>
               <summary>신고 후 진행 상황은 어디서 보나요?<ChevronDown size={17} /></summary>
