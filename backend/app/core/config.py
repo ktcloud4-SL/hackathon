@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,8 +21,18 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://onereport:onereport@localhost:5432/onereport"
 
     aws_region: str | None = None
-    s3_bucket: str | None = None
-    s3_prefix: str = "reports"
+    s3_bucket: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "S3_BUCKET",
+            "STORAGE_BUCKET",
+            "S3_BUCKET_NAME",
+        ),
+    )
+    s3_prefix: str = Field(
+        default="reports",
+        validation_alias=AliasChoices("S3_PREFIX", "STORAGE_PREFIX"),
+    )
     s3_presigned_url_expire_seconds: int = Field(default=900, gt=0)
     public_data_base_url: str | None = None
     public_data_api_key: SecretStr | None = None
