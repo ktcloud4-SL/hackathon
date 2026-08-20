@@ -7,6 +7,35 @@
   grid-template-columns: 244px minmax(0, 1fr);
   background: #f2f5f2;
   color: #1b2822;
+  font-size: 21px;
+}
+
+.admin-shell .incident-photo__heading {
+  font-size: 16px;
+}
+
+.admin-shell .incident-photo__heading > a {
+  font-size: 15px;
+}
+
+.admin-shell .incident-photo__frame > span {
+  font-size: 14px;
+}
+
+.admin-shell .incident-photo--compact .incident-photo__heading {
+  font-size: 14px;
+}
+
+.admin-shell .incident-photo--compact .incident-photo__heading > a {
+  font-size: 13px;
+}
+
+.admin-shell .incident-photo__empty {
+  font-size: 15px;
+}
+
+.admin-shell .incident-photo__empty small {
+  font-size: 13px;
 }
 
 .admin-sidebar {
@@ -45,7 +74,7 @@
 .admin-brand strong {
   color: white;
   font-family: "Manrope", sans-serif;
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -54,7 +83,7 @@
   margin-top: 1px;
   color: #789086;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
@@ -69,7 +98,7 @@
 .admin-nav-label {
   padding: 0 11px 7px;
   color: #61766c;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
@@ -87,7 +116,7 @@
   padding: 0 12px;
   color: #9fb0a8;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
   transition: color 0.18s, background 0.18s;
 }
@@ -124,7 +153,7 @@
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.13);
   font-family: "Manrope", sans-serif;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .system-health {
@@ -141,7 +170,7 @@
   gap: 7px;
   margin-bottom: 13px;
   color: #b3c4bb;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -150,7 +179,7 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 8px;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .health-row span {
@@ -171,7 +200,7 @@
 
 .health-row strong {
   color: #62d99a;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .admin-profile {
@@ -201,14 +230,14 @@
 
 .admin-profile strong {
   color: #d9e4de;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .admin-profile small {
   margin-top: 2px;
   color: #70847a;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .admin-profile button {
@@ -256,12 +285,12 @@
 .admin-header-title span {
   margin-bottom: 2px;
   color: #8c9690;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .admin-header-title h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 23px;
   letter-spacing: -0.03em;
 }
 
@@ -296,14 +325,14 @@
 .sync-state span {
   gap: 7px;
   color: #436456;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .sync-state small {
   margin-top: 2px;
   color: #9ba39f;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .icon-button {
@@ -351,7 +380,7 @@
   margin-bottom: 8px;
   color: #197458;
   font-family: "Manrope", sans-serif;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -359,14 +388,14 @@
 
 .admin-intro h2 {
   margin: 0;
-  font-size: 27px;
+  font-size: 32px;
   letter-spacing: -0.04em;
 }
 
 .admin-intro p {
   margin: 8px 0 0;
   color: #77827c;
-  font-size: 12px;
+  font-size: 17px;
 }
 
 .refresh-button {
@@ -380,7 +409,7 @@
   border-radius: 11px;
   background: white;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -443,14 +472,14 @@
 .stat-card small {
   margin-bottom: 4px;
   color: #808a85;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .stat-card strong {
   color: #223028;
   font-family: "Manrope", sans-serif;
-  font-size: 24px;
+  font-size: 29px;
   line-height: 1;
 }
 
@@ -458,7 +487,7 @@
   margin-left: 3px;
   color: #758079;
   font-family: "Noto Sans KR", sans-serif;
-  font-size: 10px;
+  font-size: 15px;
   font-style: normal;
 }
 
@@ -468,7 +497,7 @@
   top: 13px;
   right: 13px;
   font-family: "Manrope", sans-serif;
-  font-size: 7px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.05em;
 }
@@ -518,12 +547,12 @@
 
 .panel-heading h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 19px;
 }
 
 .panel-heading span {
   color: #8e9792;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .panel-heading > svg {
@@ -558,7 +587,7 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .filter-selects {
@@ -587,7 +616,7 @@
   appearance: none;
   background: white;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -669,7 +698,7 @@
 
 .incident-item-topline > strong {
   font-family: "Manrope", sans-serif;
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: -0.02em;
 }
 
@@ -682,7 +711,7 @@
 }
 
 .incident-status {
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -712,7 +741,7 @@
   color: #3f4a44;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: 10px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -730,7 +759,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .incident-item-meta span:first-child {
@@ -754,7 +783,7 @@
 
 .severity-chip::after {
   color: white;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -779,7 +808,7 @@
   border: 2px solid white;
   border-radius: 50%;
   background: #e5ebe7;
-  font-size: 7px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 700;
 }
@@ -807,12 +836,12 @@
 .empty-incidents strong {
   margin-top: 12px;
   color: #617069;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .empty-incidents span {
   margin-top: 5px;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .incident-detail-panel {
@@ -838,7 +867,7 @@
   margin-bottom: 9px;
   color: #6e7b74;
   font-family: "Manrope", sans-serif;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -853,7 +882,7 @@
   min-height: 23px;
   padding: 0 8px;
   border-radius: 7px;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -875,14 +904,14 @@
 
 .detail-updated {
   color: #9aa39e;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .detail-hero h3 {
   max-width: 640px;
   margin: 17px 0 9px;
   color: #243129;
-  font-size: 16px;
+  font-size: 21px;
   line-height: 1.55;
   letter-spacing: -0.02em;
   word-break: keep-all;
@@ -894,7 +923,7 @@
   align-items: center;
   gap: 6px;
   color: #77837c;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .detail-location svg {
@@ -914,7 +943,7 @@
   border: 1px solid #dce4de;
   border-radius: 7px;
   background: #f7f9f7;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -945,7 +974,7 @@
   align-items: center;
   gap: 6px;
   color: #617069;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -962,7 +991,7 @@
   color: currentColor;
   border-color: currentColor;
   background: white;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -979,7 +1008,7 @@
   padding: 0 11px;
   border-radius: 9px;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -1028,12 +1057,12 @@
 
 .detail-section-heading h4 {
   margin: 0;
-  font-size: 12px;
+  font-size: 17px;
 }
 
 .detail-section-heading > span {
   color: #939c97;
-  font-size: 8px;
+  font-size: 13px;
 }
 
 .agency-status-grid {
@@ -1060,7 +1089,7 @@
   width: 35px;
   height: 35px;
   border-radius: 11px;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -1077,12 +1106,12 @@
 
 .agency-status-card strong {
   margin-bottom: 4px;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .agency-current {
   width: max-content;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1152,7 +1181,7 @@
 
 .timeline-copy strong {
   color: #48564f;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1162,7 +1191,7 @@
   flex: 0 0 auto;
   color: #77837c;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1170,7 +1199,7 @@
   display: block;
   margin-top: 4px;
   color: #a3aba6;
-  font-size: 7px;
+  font-size: 12px;
 }
 
 .admin-modal-backdrop {
@@ -1228,13 +1257,13 @@
 .admin-modal-heading small {
   color: #89948e;
   font-family: "Manrope", sans-serif;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 800;
 }
 
 .admin-modal-heading h2 {
   margin: 2px 0 0;
-  font-size: 17px;
+  font-size: 22px;
 }
 
 .admin-modal-heading > button {
@@ -1252,7 +1281,7 @@
 .admin-modal > p {
   margin: 20px 0 15px;
   color: #748078;
-  font-size: 10px;
+  font-size: 15px;
   line-height: 1.65;
 }
 
@@ -1290,14 +1319,14 @@
 }
 
 .agency-options strong {
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .agency-options small {
   margin-top: 2px;
   color: #9aa39e;
   font-family: "Manrope", sans-serif;
-  font-size: 7px;
+  font-size: 12px;
 }
 
 .agency-options button > svg {
@@ -1315,7 +1344,7 @@
   border: 1px dashed #cad5cd;
   border-radius: 13px;
   background: #f8faf8;
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .no-agency-option svg {
@@ -1336,7 +1365,7 @@
   border-radius: 12px;
   background: #153a2b;
   box-shadow: 0 16px 40px rgba(12, 41, 27, 0.25);
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 600;
   animation: toastIn 0.25s ease-out;
 }
@@ -1448,7 +1477,7 @@
   }
 
   .admin-header-title h1 {
-    font-size: 16px;
+    font-size: 21px;
   }
 
   .admin-main {
@@ -1461,7 +1490,7 @@
   }
 
   .admin-intro h2 {
-    font-size: 23px;
+    font-size: 28px;
   }
 
   .admin-intro p {
@@ -1490,7 +1519,7 @@
   }
 
   .stat-card strong {
-    font-size: 20px;
+    font-size: 25px;
   }
 
   .stat-caption,
