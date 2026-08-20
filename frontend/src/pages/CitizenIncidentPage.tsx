@@ -27,6 +27,7 @@ import { ApiError } from "../api/http";
 import { CitizenHeader } from "../components/CitizenHeader";
 import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
+import { loadReportResultForIncident } from "../state/reportResult";
 import type {
   IncidentDetail,
 } from "../types/incident";
@@ -124,6 +125,10 @@ export function CitizenIncidentPage() {
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasMatchingReportResult = useMemo(
+    () => loadReportResultForIncident(incidentId) !== null,
+    [incidentId],
+  );
 
   useEffect(() => {
     let source: EventSource | undefined;
@@ -356,7 +361,9 @@ export function CitizenIncidentPage() {
                 incidentId={incident.id}
                 compact
               />
-              <a href="/report/analysis">분석 결과 다시 보기 <ChevronRight size={16} /></a>
+              {hasMatchingReportResult && (
+                <a href="/report/analysis">분석 결과 다시 보기 <ChevronRight size={16} /></a>
+              )}
             </section>
 
             <section className="citizen-safety-card">
