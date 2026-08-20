@@ -1,6 +1,6 @@
 # OneReport API 계약 v1.1
 
-해커톤 MVP의 Frontend–Backend REST 계약입니다. 제품 범위는 [MVP 명세](mvp-spec.md), 데이터 구조는 [ERD](erd.md), 실시간 이벤트는 [SSE 계약](sse-events.md)을 기준으로 합니다.
+현재 PoC의 Frontend–Backend REST 계약입니다. 제품 범위는 [MVP 명세](mvp-spec.md), 데이터 구조는 [ERD](erd.md), 실시간 이벤트는 [SSE 계약](sse-events.md)을 기준으로 합니다.
 
 ## 공통
 
@@ -38,7 +38,7 @@ Category: TRAFFIC_ACCIDENT | HUMAN_INJURY | ELECTRIC_DAMAGE |
 | `403` | 권한 없음 |
 | `404` | 리소스 없음 |
 | `409` | 중복 배정 또는 상태 충돌 |
-| `422` | 신고 입력 또는 분류 실패 |
+| `422` | 요청 입력 검증 실패 또는 신고 Category 누락 |
 
 ## 인증
 
@@ -49,7 +49,7 @@ POST /auth/logout
 GET  /auth/me
 ```
 
-로그인 성공 시 서버가 `access_token` HttpOnly Cookie를 설정합니다. JWT를 JSON 응답이나 URL에 넣지 않습니다.
+로그인 성공 시 서버가 `access_token` HttpOnly Cookie를 설정합니다. JWT를 JSON 응답이나 URL에 넣지 않습니다. 운영 HTTPS에서는 Cookie에 `Secure`를 설정하며 Frontend는 same-origin 요청에 credentials를 포함합니다.
 
 ## 신고
 

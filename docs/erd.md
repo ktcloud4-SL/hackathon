@@ -1,6 +1,6 @@
 # OneReport MVP ERD
 
-해커톤 MVP의 최소 데이터 모델입니다. API Enum과 상태 규칙은 [API 계약](api-contract.md)을 따릅니다.
+현재 PoC의 최소 데이터 모델입니다. API Enum과 상태 규칙은 [API 계약](api-contract.md)을 따릅니다.
 
 ## 관계
 
