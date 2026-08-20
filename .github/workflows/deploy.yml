@@ -72,13 +72,13 @@ jobs:
             cat <<EOF > .env
             APP_ENV=production
             POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'onereportsecurepass2026' }}
             POSTGRES_DB=${{ secrets.POSTGRES_DB || 'onereport' }}
-            DATABASE_URL=postgresql+asyncpg://${{ secrets.POSTGRES_USER || 'postgres' }}:${{ secrets.POSTGRES_PASSWORD || 'postgres' }}@postgres:5432/${{ secrets.POSTGRES_DB || 'onereport' }}
+            DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql+asyncpg://postgres:onereportsecurepass2026@onereport-postgres.c5mss68ioi5o.ap-northeast-2.rds.amazonaws.com:5432/onereport' }}
             JWT_SECRET=${{ secrets.JWT_SECRET || 'onereport-super-secret-jwt-key-must-be-32bytes' }}
             JWT_ALGORITHM=HS256
             ACCESS_TOKEN_EXPIRE_MINUTES=1440
-            AUTH_COOKIE_SECURE=false
+            AUTH_COOKIE_SECURE=${{ secrets.AUTH_COOKIE_SECURE || 'true' }}
             CORS_ORIGINS=["*"]
             AWS_REGION=${{ secrets.AWS_REGION || 'ap-northeast-2' }}
             S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME || 'onereport-uploads-788246d2' }}
@@ -88,9 +88,11 @@ jobs:
 
             echo "🚀 Launching containers with Docker Compose..."
             docker compose up -d --build --remove-orphans
+            docker compose restart nginx
 
             echo "🧹 Cleaning up unused Docker resources..."
             docker image prune -f || true
+
 
       - name: Verify Live Deployment (Health & SSE Check)
         run: |
