@@ -162,10 +162,33 @@ a {
 }
 
 .text-button {
+  display: inline-flex;
+  align-items: center;
   padding: 10px 14px;
   color: #46514b;
   font-size: 14px;
   font-weight: 600;
+}
+
+.header-user-action {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.header-user-name {
+  color: #315244;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logout-button {
+  padding: 6px 8px;
+  color: #7c8781;
+  border: 0;
+  background: transparent;
+  font-size: 10px;
+  cursor: pointer;
 }
 
 .menu-button {

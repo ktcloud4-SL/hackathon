@@ -7,13 +7,20 @@ import {
   ImagePlus,
   LocateFixed,
   MapPin,
-  Menu,
   Navigation,
   Search,
   ShieldCheck,
   X,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
+import { CitizenHeader } from "../components/CitizenHeader";
+import { CategoryHintModal } from "../components/CategoryHintModal";
+import {
+  classifyMockCategories,
+  createMockReportResult,
+  saveReportResult,
+} from "../mocks/citizenIncident";
+import type { Category } from "../types/report";
 
 interface Coordinates {
   latitude: number;
@@ -51,6 +58,8 @@ export function ReportPage() {
   const [addressQuery, setAddressQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAddresses = useMemo(() => {
@@ -118,6 +127,21 @@ export function ReportPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const completeMockAnalysis = (categoryHint?: Category) => {
+    if (!coordinates) return;
+    const result = createMockReportResult({
+      description: description.trim(),
+      address,
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      image: image ?? undefined,
+      categoryHint,
+    });
+
+    saveReportResult(result);
+    window.location.assign("/report/analysis");
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -131,37 +155,19 @@ export function ReportPage() {
       return;
     }
 
-    setNotice(
-      image
-        ? "신고 화면이 준비되었습니다. API 연결 후 사진과 함께 접수됩니다."
-        : "신고 화면이 준비되었습니다. API 연결 후 접수됩니다.",
-    );
+    if (classifyMockCategories(description.trim()).length === 0) {
+      setSelectedCategory(null);
+      setIsCategoryModalOpen(true);
+      setNotice(null);
+      return;
+    }
+
+    completeMockAnalysis();
   };
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="OneReport 홈">
-          <span className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-          </span>
-          <span>OneReport</span>
-        </a>
-
-        <nav className="desktop-nav" aria-label="주요 메뉴">
-          <a className="active" href="#report-form">신고하기</a>
-          <a href="#guide">이용안내</a>
-          <a href="#my-reports">내 신고</a>
-        </nav>
-
-        <div className="header-actions">
-          <button className="text-button" type="button">로그인</button>
-          <button className="menu-button" type="button" aria-label="메뉴 열기">
-            <Menu size={22} />
-          </button>
-        </div>
-      </header>
+      <CitizenHeader active="report" />
 
       <main id="top">
         <section className="report-hero" aria-labelledby="report-title">
@@ -350,7 +356,7 @@ export function ReportPage() {
                 입력한 정보는 사고 대응 목적으로만 사용됩니다.
               </div>
               <button className="submit-button" type="submit">
-                신고 내용 확인하기
+                신고 내용 분석하기
                 <ChevronRight size={20} />
               </button>
             </div>
@@ -414,6 +420,18 @@ export function ReportPage() {
         <span>OneReport</span>
         <p>한 번의 신고, 여러 기관의 공동대응</p>
       </footer>
+
+      {isCategoryModalOpen && (
+        <CategoryHintModal
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onConfirm={() => {
+            if (!selectedCategory) return;
+            completeMockAnalysis(selectedCategory);
+          }}
+        />
+      )}
     </div>
   );
 }
