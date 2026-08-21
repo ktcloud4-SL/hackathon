@@ -35,9 +35,13 @@ import type {
   AgencyStatus,
   AgencyType,
   Category,
-  IncidentStatus,
   Severity,
 } from "../types/report";
+import {
+  formatTimelineMessage,
+  getAgencyStatusLabel,
+  getIncidentStatusDetail,
+} from "../utils/incidentPresentation";
 import "./citizen-flow.css";
 
 const agencyStatusOrder: AgencyStatus[] = [
@@ -56,31 +60,6 @@ const agencyLabels: Record<AgencyType, { label: string; short: string }> = {
   ROAD: { label: "도로관리", short: "도로" },
   GAS: { label: "가스안전", short: "가스" },
   LOCAL_GOV: { label: "관할 지자체", short: "지자체" },
-};
-
-const agencyStatusLabels: Record<AgencyStatus, string> = {
-  ASSIGNED: "배정됨",
-  RECEIVED: "접수 완료",
-  DISPATCHED: "출동 중",
-  ARRIVED: "현장 도착",
-  IN_PROGRESS: "대응 중",
-  COMPLETED: "대응 완료",
-};
-
-const civicAgencyStatusLabels: Record<AgencyStatus, string> = {
-  ASSIGNED: "담당 배정",
-  RECEIVED: "접수 완료",
-  DISPATCHED: "처리 준비",
-  ARRIVED: "현장 확인",
-  IN_PROGRESS: "처리 중",
-  COMPLETED: "처리 완료",
-};
-
-const incidentStatusLabels: Record<IncidentStatus, { label: string; copy: string }> = {
-  OPEN: { label: "기관 접수 대기", copy: "필요한 기관에 신고가 배정되었습니다." },
-  RESPONDING: { label: "공동대응 중", copy: "한 곳 이상의 기관이 신고를 확인하고 대응 중입니다." },
-  RESOLVED: { label: "대응 완료", copy: "모든 참여 기관의 현장 대응이 완료되었습니다." },
-  CLOSED: { label: "상황 종료", copy: "관리자가 Incident를 최종 종료했습니다." },
 };
 
 const severityLabels: Record<Severity, string> = {
@@ -224,15 +203,7 @@ export function CitizenIncidentPage() {
   }
 
   const isCivic = incident.track === "CIVIC";
-  const statusDetail = isCivic
-    ? {
-        OPEN: { label: "담당기관 접수 대기", copy: "신고 내용에 맞는 담당기관에 연결되었습니다." },
-        RESPONDING: { label: "공공신고 처리 중", copy: "담당기관이 신고를 확인하고 처리 중입니다." },
-        RESOLVED: { label: "처리 완료", copy: "담당기관의 신고 처리가 완료되었습니다." },
-        CLOSED: { label: "처리 종료", copy: "공공신고 처리가 최종 종료되었습니다." },
-      }[incident.status]
-    : incidentStatusLabels[incident.status];
-  const currentAgencyStatusLabels = isCivic ? civicAgencyStatusLabels : agencyStatusLabels;
+  const statusDetail = getIncidentStatusDetail(incident.track, incident.status);
   const connectionDetail = connectionContent(connection);
   const ConnectionIcon = connectionDetail.icon;
 
@@ -315,7 +286,7 @@ export function CitizenIncidentPage() {
                         </div>
                         <span className={`agency-current-status status-${agency.status.toLowerCase()}`}>
                           {agency.status === "COMPLETED" && <Check size={14} />}
-                           {currentAgencyStatusLabels[agency.status]}
+                           {getAgencyStatusLabel(incident.track, agency.status)}
                         </span>
                       </div>
                       <div className="agency-stepper" aria-label={`${detail.label} 대응 단계`}>
@@ -323,7 +294,7 @@ export function CitizenIncidentPage() {
                           <span
                             key={status}
                             className={index <= statusIndex ? "done" : ""}
-                             title={currentAgencyStatusLabels[status]}
+                             title={getAgencyStatusLabel(incident.track, status)}
                           />
                         ))}
                       </div>
@@ -361,7 +332,7 @@ export function CitizenIncidentPage() {
                     </span>
                     <div>
                       <span>{formatTime(event.occurredAt)}{index === 0 && <em>최신</em>}</span>
-                      <p>{event.message}</p>
+                      <p>{formatTimelineMessage(event, incident.track)}</p>
                     </div>
                   </li>
                 ))}

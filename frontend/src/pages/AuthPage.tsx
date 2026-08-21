@@ -104,13 +104,13 @@ export function AuthPage() {
       <main className="auth-main">
         <section className="auth-story-panel" aria-label="OneReport 서비스 소개">
           <div className="auth-story-content">
-            <span className="auth-story-badge"><ShieldCheck size={16} /> 시민 안전 공동대응</span>
+            <span className="auth-story-badge"><ShieldCheck size={16} /> 공공신고 통합 연결</span>
             <h1>
               어디에 신고할지 몰라도<br />
               <span>상황에 필요한 기관</span>으로<br />
               연결됩니다.
             </h1>
-            <p>상황과 위치를 한 번 전달하고, 필요한 기관의 공동대응 과정을 한 화면에서 확인하세요.</p>
+            <p>상황과 위치를 한 번 전달하고, 필요한 기관의 처리·대응 과정을 한 화면에서 확인하세요.</p>
 
             <div className="auth-route-visual" aria-hidden="true">
               <div className="auth-citizen-node"><UserRound size={24} /><span>시민 신고</span></div>
@@ -124,7 +124,7 @@ export function AuthPage() {
 
             <ul className="auth-benefits">
               <li><Check size={15} />한 번의 신고로 복수 기관 자동 배정</li>
-              <li><Check size={15} />기관별 대응 상태 실시간 확인</li>
+              <li><Check size={15} />기관별 처리·대응 상태 실시간 확인</li>
               <li><Check size={15} />나의 신고와 상황 기록 안전하게 보관</li>
             </ul>
           </div>

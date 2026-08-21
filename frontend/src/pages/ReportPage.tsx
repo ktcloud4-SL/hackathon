@@ -231,7 +231,7 @@ export function ReportPage() {
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="eyebrow-icon"><ShieldCheck size={16} /></span>
-              통합 신고 · 공동대응
+              통합 신고 · 기관 연결
             </div>
             <h1 id="report-title">
               어디에 신고할지 고민하지 마세요.<br />
@@ -465,7 +465,7 @@ export function ReportPage() {
                 </li>
                 <li>
                   <span>3</span>
-                  <div><strong>실시간 공유</strong><small>대응 상태를 알려드려요</small></div>
+                  <div><strong>실시간 공유</strong><small>처리·대응 상태를 알려드려요</small></div>
                 </li>
               </ol>
             </div>

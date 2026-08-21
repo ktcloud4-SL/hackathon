@@ -53,10 +53,16 @@ import type {
   AgencyStatus,
   AgencyType,
   Category,
-  IncidentStatus,
   ReportTrack,
   Severity,
 } from "../types/report";
+import {
+  filterAgencyIncidents,
+  formatTimelineMessage,
+  getAgencyStatusLabel,
+  getIncidentStatusDetail,
+  getTrackLabel,
+} from "../utils/incidentPresentation";
 import "./agency-dashboard.css";
 
 interface AgencyConfig {
@@ -151,12 +157,12 @@ const agencyStatusOrder: AgencyStatus[] = [
   "COMPLETED",
 ];
 
-const agencyStatusLabel: Record<AgencyStatus, string> = {
-  ASSIGNED: "배정됨",
+const agencyStatusFilterLabel: Record<AgencyStatus, string> = {
+  ASSIGNED: "배정",
   RECEIVED: "접수",
-  DISPATCHED: "출동",
-  ARRIVED: "현장도착",
-  IN_PROGRESS: "조치중",
+  DISPATCHED: "출동·처리 준비",
+  ARRIVED: "현장 도착·확인",
+  IN_PROGRESS: "진행 중",
   COMPLETED: "완료",
 };
 
@@ -168,32 +174,12 @@ const nextActionLabel: Partial<Record<AgencyStatus, string>> = {
   IN_PROGRESS: "대응 완료하기",
 };
 
-const civicAgencyStatusLabel: Record<AgencyStatus, string> = {
-  ASSIGNED: "담당 배정",
-  RECEIVED: "접수",
-  DISPATCHED: "처리 준비",
-  ARRIVED: "현장 확인",
-  IN_PROGRESS: "처리 중",
-  COMPLETED: "완료",
-};
-
 const civicNextActionLabel: Partial<Record<AgencyStatus, string>> = {
   ASSIGNED: "신고 접수하기",
   RECEIVED: "처리 준비 시작",
   DISPATCHED: "현장 확인 처리",
   ARRIVED: "처리 시작하기",
   IN_PROGRESS: "처리 완료하기",
-};
-
-function getAgencyStatusLabel(track: ReportTrack, status: AgencyStatus) {
-  return track === "CIVIC" ? civicAgencyStatusLabel[status] : agencyStatusLabel[status];
-}
-
-const incidentStatusLabel: Record<IncidentStatus, string> = {
-  OPEN: "접수",
-  RESPONDING: "대응 중",
-  RESOLVED: "해결됨",
-  CLOSED: "종료",
 };
 
 const severityLabel: Record<Severity, string> = {
@@ -242,6 +228,7 @@ export function AgencyDashboardPage() {
   );
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [trackFilter, setTrackFilter] = useState<ReportTrack | "ALL">("ALL");
   const [statusFilter, setStatusFilter] = useState<AgencyStatus | "ALL">("ALL");
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [supportAgency, setSupportAgency] = useState<AgencyType | "">("");
@@ -356,24 +343,28 @@ export function AgencyDashboardPage() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
+  const filteredIncidents = filterAgencyIncidents(
+    agencyIncidents,
+    agencyType,
+    searchQuery,
+    trackFilter,
+    statusFilter,
+  );
   const selectedIncident =
-    agencyIncidents.find((incident) => incident.id === selectedId) ?? agencyIncidents[0];
+    filteredIncidents.find((incident) => incident.id === selectedId) ??
+    filteredIncidents[0] ??
+    agencyIncidents.find((incident) => incident.id === selectedId) ??
+    agencyIncidents[0];
   const myAgency = selectedIncident?.agencies.find((agency) => agency.agencyType === agencyType);
   const myStatus = myAgency?.status ?? "ASSIGNED";
   const myStatusIndex = agencyStatusOrder.indexOf(myStatus);
   const nextStatus = agencyStatusOrder[myStatusIndex + 1];
 
-  const filteredIncidents = agencyIncidents.filter((incident) => {
-    const currentAgency = incident.agencies.find((agency) => agency.agencyType === agencyType);
-    const query = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !query ||
-      String(incident.id).includes(query) ||
-      incident.report.description.toLowerCase().includes(query) ||
-      incident.report.address.toLowerCase().includes(query);
-    const matchesStatus = statusFilter === "ALL" || currentAgency?.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    if (filteredIncidents.length > 0 && !filteredIncidents.some((incident) => incident.id === selectedId)) {
+      setSelectedId(filteredIncidents[0].id);
+    }
+  }, [filteredIncidents, selectedId]);
 
   const availableAgencies = (Object.keys(agencyConfigs) as AgencyType[]).filter(
     (type) =>
@@ -467,7 +458,7 @@ export function AgencyDashboardPage() {
 
         <div className="agency-contact-card">
           <Headphones size={18} />
-          <div><small>공동대응 지원센터</small><strong>내선 2424</strong></div>
+          <div><small>기관 협업 지원센터</small><strong>내선 2424</strong></div>
           <PhoneCall size={15} />
         </div>
 
@@ -501,14 +492,14 @@ export function AgencyDashboardPage() {
 
         <main className="agency-main" id="agency-overview">
           <section className="agency-welcome">
-            <div><span><ShieldCheck size={15} />오늘의 공동대응 현황</span><h2>{config.name}에 배정된 사건입니다.</h2><p>신규 사건을 접수하고 현장 대응 단계를 실시간으로 공유해 주세요.</p></div>
+            <div><span><ShieldCheck size={15} />오늘의 신고 처리 현황</span><h2>{config.name}에 배정된 사건입니다.</h2><p>신규 사건을 접수하고 기관별 진행 단계를 실시간으로 공유해 주세요.</p></div>
             <button type="button" onClick={() => void refreshIncidents()} disabled={isLoading}><RefreshCw size={16} />목록 새로고침</button>
           </section>
 
           <section className="agency-stats" aria-label="기관 대응 현황">
             <article className="new"><span><FileText size={21} /></span><div><small>신규 배정</small><strong>{stats.assigned}<em>건</em></strong></div><b>확인 필요</b></article>
-            <article className="active"><span><Siren size={21} /></span><div><small>대응 진행</small><strong>{stats.active}<em>건</em></strong></div><b>LIVE</b></article>
-            <article className="done"><span><CheckCircle2 size={21} /></span><div><small>대응 완료</small><strong>{stats.completed}<em>건</em></strong></div><b>오늘</b></article>
+            <article className="active"><span><Siren size={21} /></span><div><small>진행 중</small><strong>{stats.active}<em>건</em></strong></div><b>LIVE</b></article>
+            <article className="done"><span><CheckCircle2 size={21} /></span><div><small>완료</small><strong>{stats.completed}<em>건</em></strong></div><b>오늘</b></article>
           </section>
 
           <section className="agency-console">
@@ -516,10 +507,18 @@ export function AgencyDashboardPage() {
               <div className="agency-list-heading"><div><h3>배정된 Incident</h3><span>{filteredIncidents.length}건</span></div><span className="polling-label"><i />5초 자동 갱신</span></div>
               <div className="agency-list-filters">
                 <label><Search size={15} /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="사건 번호, 주소 검색" /></label>
-                <label className="agency-status-filter">
+                <label className="agency-select-filter">
+                  <select value={trackFilter} onChange={(event) => setTrackFilter(event.target.value as ReportTrack | "ALL")} aria-label="사건 유형 필터">
+                    <option value="ALL">전체 유형</option>
+                    <option value="EMERGENCY">긴급·복합대응</option>
+                    <option value="CIVIC">생활·공공신고</option>
+                  </select>
+                  <ChevronDown size={14} />
+                </label>
+                <label className="agency-select-filter">
                   <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AgencyStatus | "ALL")} aria-label="기관 상태 필터">
                     <option value="ALL">전체 상태</option>
-                    {agencyStatusOrder.map((status) => <option key={status} value={status}>{agencyStatusLabel[status]}</option>)}
+                    {agencyStatusOrder.map((status) => <option key={status} value={status}>{agencyStatusFilterLabel[status]}</option>)}
                   </select>
                   <ChevronDown size={14} />
                 </label>
@@ -531,10 +530,10 @@ export function AgencyDashboardPage() {
                     <button key={incident.id} className={`agency-incident-card ${incident.id === selectedIncident.id ? "selected" : ""}`} type="button" onClick={() => setSelectedId(incident.id)}>
                       <span className={`agency-severity-dot severity-${incident.severity.toLowerCase()}`} />
                       <span className="agency-card-body">
-                        <span className="agency-card-top"><strong>Incident #{String(incident.id).padStart(3, "0")}</strong><span className={`agency-card-status status-${status.toLowerCase()}`}><i />{agencyStatusLabel[status]}</span></span>
+                        <span className="agency-card-top"><strong>Incident #{String(incident.id).padStart(3, "0")}</strong><span className={`agency-card-status status-${status.toLowerCase()}`}><i />{getAgencyStatusLabel(incident.track, status)}</span></span>
                         <span className="agency-card-description">{incident.report.description}</span>
                         <span className="agency-card-location"><MapPin size={12} />{incident.report.address}</span>
-                         <span className="agency-card-footer"><span><span className={`report-track-pill track-${incident.track.toLowerCase()}`}>{incident.track === "CIVIC" ? "생활·공공" : "긴급·복합"}</span><span className={`agency-severity-label severity-${incident.severity.toLowerCase()}`}>{severityLabel[incident.severity]}</span></span><time>{formatElapsed(incident.updatedAt)}</time></span>
+                         <span className="agency-card-footer"><span><span className={`report-track-pill track-${incident.track.toLowerCase()}`}>{getTrackLabel(incident.track, true)}</span><span className={`agency-severity-label severity-${incident.severity.toLowerCase()}`}>{severityLabel[incident.severity]}</span></span><time>{formatElapsed(incident.updatedAt)}</time></span>
                       </span>
                       <ChevronRight size={17} />
                     </button>
@@ -546,7 +545,7 @@ export function AgencyDashboardPage() {
 
             <article className="agency-incident-detail">
               <div className="agency-detail-hero">
-                 <div className="agency-detail-top"><div><span>INCIDENT #{String(selectedIncident.id).padStart(3, "0")}</span><div><b className={`report-track-pill track-${selectedIncident.track.toLowerCase()}`}>{selectedIncident.track === "CIVIC" ? "생활·공공신고" : "긴급·복합대응"}</b><b className={`severity-${selectedIncident.severity.toLowerCase()}`}><AlertTriangle size={12} />{severityLabel[selectedIncident.severity]}</b><b className={`incident-${selectedIncident.status.toLowerCase()}`}>{incidentStatusLabel[selectedIncident.status]}</b></div></div><time>{formatElapsed(selectedIncident.updatedAt)} 업데이트</time></div>
+                 <div className="agency-detail-top"><div><span>INCIDENT #{String(selectedIncident.id).padStart(3, "0")}</span><div><b className={`report-track-pill track-${selectedIncident.track.toLowerCase()}`}>{getTrackLabel(selectedIncident.track)}</b><b className={`severity-${selectedIncident.severity.toLowerCase()}`}><AlertTriangle size={12} />{severityLabel[selectedIncident.severity]}</b><b className={`incident-${selectedIncident.status.toLowerCase()}`}>{getIncidentStatusDetail(selectedIncident.track, selectedIncident.status).label}</b></div></div><time>{formatElapsed(selectedIncident.updatedAt)} 업데이트</time></div>
                 <h3>{selectedIncident.report.description}</h3>
                 <p><MapPin size={14} />{selectedIncident.report.address}</p>
                 <div className="agency-category-list">{selectedIncident.categories.map((category) => <span key={category}>{categoryLabel[category]}</span>)}</div>
@@ -570,7 +569,7 @@ export function AgencyDashboardPage() {
                 {nextStatus ? (
                    <button className="next-status-button" type="button" onClick={() => void handleNextStatus()} disabled={isActionPending}><span><Crosshair size={17} />{selectedIncident.track === "CIVIC" ? civicNextActionLabel[myStatus] : nextActionLabel[myStatus]}</span><ChevronRight size={18} /></button>
                 ) : (
-                  <div className="response-complete"><CheckCircle2 size={18} />이 기관의 현장 대응이 완료되었습니다.</div>
+                  <div className="response-complete"><CheckCircle2 size={18} />{selectedIncident.track === "CIVIC" ? "이 기관의 신고 처리가 완료되었습니다." : "이 기관의 현장 대응이 완료되었습니다."}</div>
                 )}
               </section>
 
@@ -589,7 +588,7 @@ export function AgencyDashboardPage() {
                 <div className="agency-section-heading"><div><Clock3 size={16} /><h4>Timeline</h4></div><span>{selectedIncident.timeline.length}개 기록</span></div>
                 <div className="agency-timeline">
                   {[...selectedIncident.timeline].reverse().map((item, index) => (
-                    <div className="agency-timeline-item" key={item.id}><div><span className={index === 0 ? "latest" : ""}><CircleDot size={13} /></span>{index < selectedIncident.timeline.length - 1 && <i />}</div><div><div><strong>{item.message}</strong><time>{formatTime(item.occurredAt)}</time></div>{item.type === "SUPPORT_REQUESTED" && typeof item.metadata.reason === "string" && <p>요청 사유 · {item.metadata.reason}</p>}</div></div>
+                    <div className="agency-timeline-item" key={item.id}><div><span className={index === 0 ? "latest" : ""}><CircleDot size={13} /></span>{index < selectedIncident.timeline.length - 1 && <i />}</div><div><div><strong>{formatTimelineMessage(item, selectedIncident.track)}</strong><time>{formatTime(item.occurredAt)}</time></div>{item.type === "SUPPORT_REQUESTED" && typeof item.metadata.reason === "string" && <p>요청 사유 · {item.metadata.reason}</p>}</div></div>
                   ))}
                 </div>
               </section>
@@ -602,7 +601,7 @@ export function AgencyDashboardPage() {
         <div className="support-modal-backdrop" onMouseDown={() => setSupportModalOpen(false)}>
           <form className="support-modal" onSubmit={handleSupportRequest} onMouseDown={(event) => event.stopPropagation()}>
             <div className="support-modal-heading"><div><span><MessageSquarePlus size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2>추가 기관 지원 요청</h2></div></div><button type="button" onClick={() => setSupportModalOpen(false)} aria-label="지원 요청 창 닫기"><X size={18} /></button></div>
-            <p>현장에서 추가 대응이 필요한 기관과 요청 사유를 입력해 주세요.</p>
+            <p>{selectedIncident.track === "CIVIC" ? "신고 처리에 추가로 필요한 기관과 요청 사유를 입력해 주세요." : "현장에서 추가 대응이 필요한 기관과 요청 사유를 입력해 주세요."}</p>
             <label className="support-field"><span>지원 기관 <b>*</b></span><div><select value={supportAgency} onChange={(event) => setSupportAgency(event.target.value as AgencyType)} required><option value="">기관을 선택하세요</option>{availableAgencies.map((type) => <option key={type} value={type}>{agencyConfigs[type].name}</option>)}</select><ChevronDown size={15} /></div></label>
             <label className="support-field"><span>요청 사유 <b>*</b></span><textarea value={supportReason} onChange={(event) => setSupportReason(event.target.value)} placeholder="예: 현장에서 가스 냄새가 발견되었습니다." maxLength={300} required /><small>{supportReason.length} / 300</small></label>
             <div className="support-notice"><AlertTriangle size={15} /><span>요청 즉시 대상 기관이 <strong>배정됨</strong> 상태로 추가되고 Timeline에 기록됩니다.</span></div>
