@@ -613,11 +613,22 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-.incident-hero-heading > div > span {
+.incident-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+}
+
+.incident-title-row > span:first-child {
   color: #bfe6d5;
   font-family: "Manrope", sans-serif;
   font-size: 11px;
   font-weight: 700;
+}
+
+.incident-title-row .report-track-pill {
+  flex: 0 0 auto;
 }
 
 .incident-hero h1 {

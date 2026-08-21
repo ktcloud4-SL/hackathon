@@ -142,7 +142,7 @@ export function MyReportsPage() {
 
         <section className="report-summary-strip" aria-label="신고 현황 요약">
           <div><span>전체 신고</span><strong>{counts.all}</strong><small>건</small></div>
-          <div className="active"><span>대응 중</span><strong>{counts.active}</strong><small>건</small></div>
+          <div className="active"><span>진행 중</span><strong>{counts.active}</strong><small>건</small></div>
           <div className="completed"><span>완료·종료</span><strong>{counts.completed}</strong><small>건</small></div>
           <p><ShieldCheck size={17} />신고 내용은 본인만 조회할 수 있습니다.</p>
         </section>
@@ -151,7 +151,7 @@ export function MyReportsPage() {
           <div className="report-filter-tabs" role="tablist" aria-label="신고 상태 필터">
             {([
               ["ALL", "전체", counts.all],
-              ["ACTIVE", "대응 중", counts.active],
+              ["ACTIVE", "진행 중", counts.active],
               ["COMPLETED", "완료", counts.completed],
             ] as const).map(([value, label, count]) => (
               <button

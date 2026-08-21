@@ -409,7 +409,7 @@ export function AdminDashboardPage() {
           <section className="admin-intro">
             <div>
               <div className="admin-eyebrow"><ShieldCheck size={15} /> OneReport Command Center</div>
-              <h2>전체 사고 대응 현황</h2>
+              <h2>전체 신고 처리 현황</h2>
               <p>기관별 처리·대응 상태를 확인하고 필요한 조치를 빠르게 이어가세요.</p>
             </div>
             <button className="refresh-button" type="button" onClick={() => void refreshIncidents()} disabled={isLoading}>

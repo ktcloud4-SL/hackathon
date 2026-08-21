@@ -238,10 +238,12 @@ export function CitizenIncidentPage() {
           <div className="incident-hero-heading">
             <span className="incident-icon"><Siren size={26} /></span>
             <div>
-              <span>Incident #{incident.id}</span>
-              <span className={`report-track-pill track-${incident.track.toLowerCase()}`}>
-                {isCivic ? "생활·공공신고" : "긴급·복합대응"}
-              </span>
+              <div className="incident-title-row">
+                <span>Incident #{incident.id}</span>
+                <span className={`report-track-pill track-${incident.track.toLowerCase()}`}>
+                  {isCivic ? "생활·공공신고" : "긴급·복합대응"}
+                </span>
+              </div>
               <h1>{statusDetail.label}</h1>
               <p>{statusDetail.copy}</p>
             </div>
