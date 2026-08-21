@@ -292,7 +292,7 @@ export function CitizenIncidentPage() {
                            {getAgencyStatusLabel(incident.track, agency.status)}
                         </span>
                       </div>
-                      <div className="agency-stepper" aria-label={`${detail.label} 대응 단계`}>
+                      <div className="agency-stepper" aria-label={`${detail.label} ${isCivic ? "처리" : "대응"} 단계`}>
                         {agencyStatusOrder.map((status, index) => (
                           <span
                             key={status}
@@ -302,10 +302,7 @@ export function CitizenIncidentPage() {
                         ))}
                       </div>
                       <div className="agency-step-labels">
-                         {(isCivic
-                           ? ["배정", "접수", "준비", "확인", "처리", "완료"]
-                           : ["배정", "접수", "출동", "도착", "대응", "완료"]
-                         ).map((label) => <span key={label}>{label}</span>)}
+                         {agencyStatusOrder.map((status) => <span key={status}>{getAgencyStatusLabel(incident.track, status)}</span>)}
                       </div>
                     </article>
                   );

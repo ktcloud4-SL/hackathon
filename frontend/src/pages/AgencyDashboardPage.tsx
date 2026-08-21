@@ -414,7 +414,7 @@ export function AgencyDashboardPage() {
     try {
       await requestIncidentSupport(selectedIncident.id, supportAgency, supportReason.trim());
       updateIncident(await getIncident(selectedIncident.id));
-      setToast(`${targetConfig.name} 지원 요청이 완료되었습니다.`);
+      setToast(`${targetConfig.name} ${selectedIncident.track === "CIVIC" ? "협업기관" : "지원"} 요청이 완료되었습니다.`);
       setSupportAgency("");
       setSupportReason("");
       setSupportModalOpen(false);
@@ -454,7 +454,7 @@ export function AgencyDashboardPage() {
           <span>상황실</span>
           <a className="active" href="#agency-overview"><LayoutDashboard size={18} />배정 사건<span>{agencyIncidents.length}</span></a>
           <a href="#agency-timeline"><Activity size={18} />실시간 현황</a>
-          <a href="#support"><MessageSquarePlus size={18} />지원 요청</a>
+          <a href="#support"><MessageSquarePlus size={18} />{selectedIncident.track === "CIVIC" ? "협업기관 요청" : "지원 요청"}</a>
         </nav>
 
         <div className="agency-contact-card">
@@ -493,11 +493,11 @@ export function AgencyDashboardPage() {
 
         <main className="agency-main" id="agency-overview">
           <section className="agency-welcome">
-            <div><span><ShieldCheck size={15} />오늘의 신고 처리 현황</span><h2>{config.name}에 배정된 사건입니다.</h2><p>신규 사건을 접수하고 기관별 진행 단계를 실시간으로 공유해 주세요.</p></div>
+            <div><span><ShieldCheck size={15} />오늘의 신고 처리 현황</span><h2>{config.name}에 배정된 사건입니다.</h2><p>{selectedIncident.track === "CIVIC" ? "신고를 접수하고 담당기관별 처리 진행 상황을 공유해 주세요." : "신규 사건을 접수하고 현장 대응 단계를 실시간으로 공유해 주세요."}</p></div>
             <button type="button" onClick={() => void refreshIncidents()} disabled={isLoading}><RefreshCw size={16} />목록 새로고침</button>
           </section>
 
-          <section className="agency-stats" aria-label="기관 대응 현황">
+          <section className="agency-stats" aria-label="기관 처리·대응 현황">
             <article className="new"><span><FileText size={21} /></span><div><small>신규 배정</small><strong>{stats.assigned}<em>건</em></strong></div><b>확인 필요</b></article>
             <article className="active"><span><Siren size={21} /></span><div><small>진행 중</small><strong>{stats.active}<em>건</em></strong></div><b>LIVE</b></article>
             <article className="done"><span><CheckCircle2 size={21} /></span><div><small>완료</small><strong>{stats.completed}<em>건</em></strong></div><b>오늘</b></article>
@@ -519,7 +519,7 @@ export function AgencyDashboardPage() {
                 <label className="agency-select-filter">
                   <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AgencyStatus | "ALL")} aria-label="기관 상태 필터">
                     <option value="ALL">전체 상태</option>
-                    {agencyStatusOrder.map((status) => <option key={status} value={status}>{agencyStatusFilterLabel[status]}</option>)}
+                    {agencyStatusOrder.map((status) => <option key={status} value={status}>{trackFilter === "ALL" ? agencyStatusFilterLabel[status] : getAgencyStatusLabel(trackFilter, status)}</option>)}
                   </select>
                   <ChevronDown size={14} />
                 </label>
@@ -575,7 +575,7 @@ export function AgencyDashboardPage() {
               </section>
 
               <section className="agency-detail-section joint-agencies">
-                 <div className="agency-section-heading"><div><Building2 size={16} /><h4>{selectedIncident.track === "CIVIC" ? "처리 담당기관" : "공동 대응기관"}</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}><MessageSquarePlus size={15} />추가 기관 요청</button></div>
+                 <div className="agency-section-heading"><div><Building2 size={16} /><h4>{selectedIncident.track === "CIVIC" ? "처리 담당기관" : "공동 대응기관"}</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}><MessageSquarePlus size={15} />{selectedIncident.track === "CIVIC" ? "협업기관 요청" : "추가 기관 요청"}</button></div>
                 <div className="joint-agency-grid">
                   {selectedIncident.agencies.map((agency) => {
                     const itemConfig = agencyConfigs[agency.agencyType];
@@ -601,12 +601,12 @@ export function AgencyDashboardPage() {
       {supportModalOpen && (
         <div className="support-modal-backdrop" onMouseDown={() => setSupportModalOpen(false)}>
           <form className="support-modal" onSubmit={handleSupportRequest} onMouseDown={(event) => event.stopPropagation()}>
-            <div className="support-modal-heading"><div><span><MessageSquarePlus size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2>추가 기관 지원 요청</h2></div></div><button type="button" onClick={() => setSupportModalOpen(false)} aria-label="지원 요청 창 닫기"><X size={18} /></button></div>
+            <div className="support-modal-heading"><div><span><MessageSquarePlus size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2>{selectedIncident.track === "CIVIC" ? "협업기관 요청" : "추가 기관 지원 요청"}</h2></div></div><button type="button" onClick={() => setSupportModalOpen(false)} aria-label="지원 요청 창 닫기"><X size={18} /></button></div>
             <p>{selectedIncident.track === "CIVIC" ? "신고 처리에 추가로 필요한 기관과 요청 사유를 입력해 주세요." : "현장에서 추가 대응이 필요한 기관과 요청 사유를 입력해 주세요."}</p>
-            <label className="support-field"><span>지원 기관 <b>*</b></span><div><select value={supportAgency} onChange={(event) => setSupportAgency(event.target.value as AgencyType)} required><option value="">기관을 선택하세요</option>{availableAgencies.map((type) => <option key={type} value={type}>{agencyConfigs[type].name}</option>)}</select><ChevronDown size={15} /></div></label>
+            <label className="support-field"><span>{selectedIncident.track === "CIVIC" ? "협업기관" : "지원 기관"} <b>*</b></span><div><select value={supportAgency} onChange={(event) => setSupportAgency(event.target.value as AgencyType)} required><option value="">기관을 선택하세요</option>{availableAgencies.map((type) => <option key={type} value={type}>{agencyConfigs[type].name}</option>)}</select><ChevronDown size={15} /></div></label>
             <label className="support-field"><span>요청 사유 <b>*</b></span><textarea value={supportReason} onChange={(event) => setSupportReason(event.target.value)} placeholder="예: 현장에서 가스 냄새가 발견되었습니다." maxLength={300} required /><small>{supportReason.length} / 300</small></label>
-            <div className="support-notice"><AlertTriangle size={15} /><span>요청 즉시 대상 기관이 <strong>배정됨</strong> 상태로 추가되고 Timeline에 기록됩니다.</span></div>
-            <div className="support-modal-actions"><button type="button" onClick={() => setSupportModalOpen(false)}>취소</button><button type="submit" disabled={isActionPending || !supportAgency || !supportReason.trim()}><MessageSquarePlus size={16} />{isActionPending ? "요청 중..." : "지원 요청하기"}</button></div>
+            <div className="support-notice"><AlertTriangle size={15} /><span>요청 즉시 대상 기관이 <strong>{selectedIncident.track === "CIVIC" ? "담당 배정" : "배정됨"}</strong> 상태로 추가되고 Timeline에 기록됩니다.</span></div>
+            <div className="support-modal-actions"><button type="button" onClick={() => setSupportModalOpen(false)}>취소</button><button type="submit" disabled={isActionPending || !supportAgency || !supportReason.trim()}><MessageSquarePlus size={16} />{isActionPending ? "요청 중..." : selectedIncident.track === "CIVIC" ? "협업기관 요청하기" : "지원 요청하기"}</button></div>
           </form>
         </div>
       )}

@@ -278,7 +278,7 @@ export function AdminDashboardPage() {
     try {
       updateIncident(await addIncidentAgency(selectedIncident.id, agencyType));
       setIsAgencyModalOpen(false);
-      setToast(`${agencyLabel[agencyType]}이 대응기관으로 배정되었습니다.`);
+      setToast(`${agencyLabel[agencyType]}이 ${selectedIncident.track === "CIVIC" ? "처리 담당기관" : "대응기관"}으로 배정되었습니다.`);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "기관을 추가하지 못했습니다.");
     } finally {
@@ -611,7 +611,7 @@ export function AdminDashboardPage() {
                     onClick={() => setIsAgencyModalOpen(true)}
                     disabled={isActionPending || availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}
                   >
-                    <Plus size={16} />기관 추가
+                    <Plus size={16} />{selectedIncident.track === "CIVIC" ? "협업기관 추가" : "대응기관 추가"}
                   </button>
                   <button
                     className="close-incident-button"
@@ -677,10 +677,10 @@ export function AdminDashboardPage() {
         <div className="admin-modal-backdrop" role="presentation" onMouseDown={() => setIsAgencyModalOpen(false)}>
           <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="agency-modal-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="admin-modal-heading">
-              <div><span><Building2 size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2 id="agency-modal-title">{selectedIncident.track === "CIVIC" ? "처리기관 추가" : "대응기관 추가"}</h2></div></div>
+              <div><span><Building2 size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2 id="agency-modal-title">{selectedIncident.track === "CIVIC" ? "협업기관 요청" : "대응기관 추가"}</h2></div></div>
               <button type="button" onClick={() => setIsAgencyModalOpen(false)} aria-label="기관 추가 창 닫기"><X size={19} /></button>
             </div>
-            <p>{selectedIncident.track === "CIVIC" ? "신고 처리에 추가로 필요한 기관을 선택하세요." : "현장 대응에 추가로 필요한 기관을 선택하세요."} 선택 즉시 <strong>배정됨</strong> 상태로 참여합니다.</p>
+            <p>{selectedIncident.track === "CIVIC" ? "신고 처리에 추가로 필요한 기관을 선택하세요." : "현장 대응에 추가로 필요한 기관을 선택하세요."} 선택 즉시 <strong>{selectedIncident.track === "CIVIC" ? "담당 배정" : "배정됨"}</strong> 상태로 참여합니다.</p>
             <div className="agency-options">
               {availableAgencies.map((agencyType) => (
                 <button key={agencyType} type="button" onClick={() => void handleAddAgency(agencyType)} disabled={isActionPending}>
