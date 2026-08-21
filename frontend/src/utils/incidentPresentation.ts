@@ -19,6 +19,15 @@ const agencyLabels: Record<AgencyType, string> = {
   LOCAL_GOV: "관할 지자체",
 };
 
+const compactAgencyLabels: Record<AgencyType, string> = {
+  POLICE: "경찰",
+  FIRE: "소방",
+  KEPCO: "한전",
+  ROAD: "도로",
+  GAS: "가스",
+  LOCAL_GOV: "지자체",
+};
+
 const emergencyAgencyStatusLabels: Record<AgencyStatus, string> = {
   ASSIGNED: "배정됨",
   RECEIVED: "접수",
@@ -110,6 +119,32 @@ export function filterAgencyIncidents(
     const matchesTrack = trackFilter === "ALL" || incident.track === trackFilter;
     const matchesStatus = statusFilter === "ALL" || currentAgency?.status === statusFilter;
     return matchesSearch && matchesTrack && matchesStatus;
+  });
+}
+
+export function getCompactAgencyLabel(agencyType: AgencyType): string {
+  return compactAgencyLabels[agencyType];
+}
+
+export function filterAdminIncidents(
+  incidents: AdminIncident[],
+  query: string,
+  trackFilter: TrackFilter,
+  statusFilter: IncidentStatus | "ALL",
+  severityFilter: Severity | "ALL",
+): AdminIncident[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return incidents.filter((incident) => {
+    const matchesSearch =
+      !normalizedQuery ||
+      String(incident.id).includes(normalizedQuery) ||
+      incident.report.description.toLowerCase().includes(normalizedQuery) ||
+      incident.report.address.toLowerCase().includes(normalizedQuery);
+    const matchesTrack = trackFilter === "ALL" || incident.track === trackFilter;
+    const matchesStatus = statusFilter === "ALL" || incident.status === statusFilter;
+    const matchesSeverity = severityFilter === "ALL" || incident.severity === severityFilter;
+    return matchesSearch && matchesTrack && matchesStatus && matchesSeverity;
   });
 }
 

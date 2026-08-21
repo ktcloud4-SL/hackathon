@@ -197,6 +197,7 @@ const categoryLabel: Record<Category, string> = {
   ROAD_DAMAGE: "도로위험",
   GAS_RISK: "가스위험",
   ANIMAL_CARCASS: "동물 사체",
+  OTHER_CIVIC: "기타 생활·공공신고",
 };
 
 function getAgencyTypeFromPath(): AgencyType {

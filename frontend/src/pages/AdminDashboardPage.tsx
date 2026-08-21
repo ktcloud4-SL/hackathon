@@ -48,11 +48,14 @@ import type {
   AgencyType,
   Category,
   IncidentStatus,
+  ReportTrack,
   Severity,
 } from "../types/report";
 import {
+  filterAdminIncidents,
   formatTimelineMessage,
   getAgencyStatusLabel,
+  getCompactAgencyLabel,
   getIncidentStatusDetail,
 } from "../utils/incidentPresentation";
 import "./admin-dashboard.css";
@@ -81,6 +84,7 @@ const categoryLabel: Record<Category, string> = {
   ROAD_DAMAGE: "도로위험",
   GAS_RISK: "가스위험",
   ANIMAL_CARCASS: "동물 사체",
+  OTHER_CIVIC: "기타 생활·공공신고",
 };
 
 const allAgencies: AgencyType[] = ["POLICE", "FIRE", "KEPCO", "ROAD", "GAS", "LOCAL_GOV"];
@@ -117,6 +121,7 @@ export function AdminDashboardPage() {
   const [selectedIncidentId, setSelectedIncidentId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | "ALL">("ALL");
   const [severityFilter, setSeverityFilter] = useState<Severity | "ALL">("ALL");
+  const [trackFilter, setTrackFilter] = useState<ReportTrack | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -225,21 +230,21 @@ export function AdminDashboardPage() {
   }, [toast]);
 
   const filteredIncidents = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    return incidents.filter((incident) => {
-      const matchesStatus = statusFilter === "ALL" || incident.status === statusFilter;
-      const matchesSeverity = severityFilter === "ALL" || incident.severity === severityFilter;
-      const matchesQuery =
-        !normalizedQuery ||
-        String(incident.id).includes(normalizedQuery) ||
-        incident.report.description.toLowerCase().includes(normalizedQuery) ||
-        incident.report.address.toLowerCase().includes(normalizedQuery);
-      return matchesStatus && matchesSeverity && matchesQuery;
-    });
-  }, [incidents, searchQuery, severityFilter, statusFilter]);
+    return filterAdminIncidents(
+      incidents,
+      searchQuery,
+      trackFilter,
+      statusFilter,
+      severityFilter,
+    );
+  }, [incidents, searchQuery, severityFilter, statusFilter, trackFilter]);
 
   const selectedIncident =
-    incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0] ?? null;
+    filteredIncidents.find((incident) => incident.id === selectedIncidentId) ??
+    filteredIncidents[0] ??
+    incidents.find((incident) => incident.id === selectedIncidentId) ??
+    incidents[0] ??
+    null;
 
   const availableAgencies = selectedIncident ? allAgencies.filter(
     (agencyType) =>
@@ -456,6 +461,18 @@ export function AdminDashboardPage() {
                 <div className="filter-selects">
                   <label>
                     <select
+                      value={trackFilter}
+                      onChange={(event) => setTrackFilter(event.target.value as ReportTrack | "ALL")}
+                      aria-label="처리 유형 필터"
+                    >
+                      <option value="ALL">전체 유형</option>
+                      <option value="EMERGENCY">긴급·복합대응</option>
+                      <option value="CIVIC">생활·공공신고</option>
+                    </select>
+                    <ChevronDown size={14} />
+                  </label>
+                  <label>
+                    <select
                       value={statusFilter}
                       onChange={(event) => setStatusFilter(event.target.value as IncidentStatus | "ALL")}
                       aria-label="사건 상태 필터"
@@ -517,10 +534,9 @@ export function AdminDashboardPage() {
                             </span>
                           </span>
                           <span className="agency-stack">
-                            {incident.agencies.slice(0, 4).map((agency) => (
-                              <i key={agency.agencyType}>{agencyLabel[agency.agencyType].slice(0, 2)}</i>
+                            {incident.agencies.map((agency) => (
+                              <span key={agency.agencyType}>{getCompactAgencyLabel(agency.agencyType)}</span>
                             ))}
-                            {incident.agencies.length > 4 && <em>+{incident.agencies.length - 4}</em>}
                           </span>
                         </span>
                       </span>

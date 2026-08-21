@@ -77,6 +77,7 @@ const categoryLabels: Record<Category, string> = {
   ROAD_DAMAGE: "도로 파손",
   GAS_RISK: "가스 위험",
   ANIMAL_CARCASS: "동물 사체",
+  OTHER_CIVIC: "기타 생활·공공신고",
 };
 
 type ConnectionState = "connecting" | "live" | "retrying" | "error";

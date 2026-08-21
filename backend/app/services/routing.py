@@ -14,6 +14,7 @@ AGENCIES_BY_CATEGORY: dict[Category, tuple[AgencyType, ...]] = {
     Category.ROAD_DAMAGE: (AgencyType.ROAD,),
     Category.GAS_RISK: (AgencyType.GAS,),
     Category.ANIMAL_CARCASS: (AgencyType.LOCAL_GOV,),
+    Category.OTHER_CIVIC: (AgencyType.LOCAL_GOV,),
 }
 
 EMERGENCY_CATEGORIES: frozenset[Category] = frozenset(
@@ -27,7 +28,7 @@ EMERGENCY_CATEGORIES: frozenset[Category] = frozenset(
 )
 
 CIVIC_CATEGORIES: frozenset[Category] = frozenset(
-    {Category.ROAD_DAMAGE, Category.ANIMAL_CARCASS}
+    {Category.ROAD_DAMAGE, Category.ANIMAL_CARCASS, Category.OTHER_CIVIC}
 )
 
 

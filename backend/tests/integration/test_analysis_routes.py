@@ -9,6 +9,36 @@ def test_analyze_report_response_schema(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("JWT_SECRET", "integration-test-secret-at-least-32-bytes")
     get_settings.cache_clear()
 
+
+def test_analyze_report_returns_confirmable_public_report_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JWT_SECRET", "integration-test-secret-at-least-32-bytes")
+    get_settings.cache_clear()
+
+    with TestClient(create_app()) as client:
+        response = client.post(
+            "/api/analyze-report",
+            json={
+                "description": "공원 벤치가 부서져 튀어나온 부분 때문에 위험합니다.",
+                "address": "서울특별시 중구",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "categories": ["OTHER_CIVIC"],
+        "track": "CIVIC",
+        "severity": "LOW",
+        "suggestedAgencies": ["LOCAL_GOV"],
+        "summary": "구체 유형에 정확히 일치하지 않는 생활·공공신고로 분석했습니다.",
+        "confidence": 0.35,
+        "reasons": ["관할 기관에서 신고 내용을 확인한 뒤 담당부서로 연결합니다."],
+        "needsUserConfirmation": True,
+        "analysisMethod": "RULE",
+    }
+    get_settings.cache_clear()
+
     with TestClient(create_app()) as client:
         response = client.post(
             "/api/analyze-report",

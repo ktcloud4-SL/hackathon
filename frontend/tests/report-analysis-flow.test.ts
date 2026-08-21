@@ -7,6 +7,7 @@ import {
   deriveTrackPreview,
   getAnalysisHighlights,
   getAnalysisModalCopy,
+  getRecommendationGuide,
   getAnalysisStageLabels,
   getAnalysisStepState,
   hasUsableRecommendation,
@@ -131,7 +132,7 @@ test("analysis modal copy clearly distinguishes reports with photos", () => {
 });
 
 
-test("only classified results are used as recommendations", () => {
+test("any categorized result is shown, including a confirmable civic fallback", () => {
   const classified = {
     categories: ["GAS_RISK"],
     track: "EMERGENCY",
@@ -151,8 +152,17 @@ test("only classified results are used as recommendations", () => {
     reasons: [],
     needsUserConfirmation: true,
   } as const;
+  const civicFallback = {
+    ...classified,
+    categories: ["OTHER_CIVIC"],
+    track: "CIVIC",
+    severity: "LOW",
+    suggestedAgencies: ["LOCAL_GOV"],
+    needsUserConfirmation: true,
+  } as const;
 
   assert.equal(hasUsableRecommendation(classified), true);
+  assert.equal(hasUsableRecommendation(civicFallback), true);
   assert.equal(hasUsableRecommendation(unclassified), false);
 });
 
@@ -161,6 +171,7 @@ test("track preview follows the categories the user finally confirms", () => {
   assert.equal(deriveTrackPreview([]), null);
   assert.equal(deriveTrackPreview(["ANIMAL_CARCASS"]), "CIVIC");
   assert.equal(deriveTrackPreview(["ROAD_DAMAGE"]), "CIVIC");
+  assert.equal(deriveTrackPreview(["OTHER_CIVIC"]), "CIVIC");
   assert.equal(
     deriveTrackPreview(["ANIMAL_CARCASS", "HUMAN_INJURY"]),
     "EMERGENCY",
@@ -191,7 +202,7 @@ test("analysis highlights keep agencies and up to three reasons", () => {
 });
 
 
-test("single-category highlights keep one reason and fallback has no details", () => {
+test("single-category highlights keep one reason and empty fallback has no details", () => {
   const single = {
     categories: ["GAS_RISK"],
     track: "EMERGENCY",
@@ -214,4 +225,31 @@ test("single-category highlights keep one reason and fallback has no details", (
   assert.deepEqual(getAnalysisHighlights(single)?.reasons, ["가스 위험 근거"]);
   assert.equal(getAnalysisHighlights(fallback), null);
   assert.equal(getAnalysisHighlights(null), null);
+});
+
+
+test("confirmable OTHER_CIVIC fallback keeps its real analysis details", () => {
+  const fallback = {
+    categories: ["OTHER_CIVIC"],
+    track: "CIVIC",
+    severity: "LOW",
+    suggestedAgencies: ["LOCAL_GOV"],
+    summary: "구체 유형에 정확히 일치하지 않는 생활·공공신고로 분석했습니다.",
+    confidence: 0.35,
+    reasons: ["관할 기관에서 신고 내용을 확인한 뒤 담당부서로 연결합니다."],
+    needsUserConfirmation: true,
+    analysisMethod: "RULE",
+  } as const;
+
+  assert.deepEqual(getAnalysisHighlights(fallback), {
+    summary: fallback.summary,
+    severity: "LOW",
+    suggestedAgencies: ["LOCAL_GOV"],
+    reasons: fallback.reasons,
+    track: "CIVIC",
+  });
+  assert.equal(
+    getRecommendationGuide(fallback),
+    "유형이 정확하지 않아도 괜찮아요. 접수 후 담당기관이 신고 내용을 다시 확인합니다.",
+  );
 });

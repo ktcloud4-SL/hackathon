@@ -16,13 +16,15 @@ from app.services.routing import route_categories
         "가스레인지가 고장났습니다.",
     ],
 )
-def test_ambiguous_words_do_not_trigger_incident_categories(description: str) -> None:
+def test_ambiguous_words_do_not_trigger_specific_incident_categories(
+    description: str,
+) -> None:
     result = analyze_report(description=description, address="서울특별시 중구")
 
-    assert result.categories == []
-    assert result.suggested_agencies == []
+    assert result.categories == [Category.OTHER_CIVIC]
+    assert result.suggested_agencies == [AgencyType.LOCAL_GOV]
     assert result.needs_user_confirmation is True
-    assert result.track is None
+    assert result.track is ReportTrack.CIVIC
 
 
 @pytest.mark.parametrize(
@@ -115,11 +117,33 @@ def test_analyzes_unconscious_person_as_human_injury() -> None:
     assert result.suggested_agencies == [AgencyType.FIRE]
 
 
-def test_unclassified_report_requires_manual_confirmation() -> None:
+@pytest.mark.parametrize(
+    "description",
+    [
+        "공원 벤치가 부서져 튀어나온 부분 때문에 위험합니다.",
+        "놀이터 그네가 고장 나 아이들이 이용하기 위험합니다.",
+        "골목에 쓰레기가 며칠째 쌓여 악취가 납니다.",
+    ],
+)
+def test_general_public_report_uses_civic_fallback(description: str) -> None:
     result = analyze_report(
-        description="무슨 상황인지 잘 모르겠습니다.",
+        description=description,
         address="서울특별시 중구",
     )
+
+    assert result.categories == [Category.OTHER_CIVIC]
+    assert result.suggested_agencies == [AgencyType.LOCAL_GOV]
+    assert result.severity is Severity.LOW
+    assert result.needs_user_confirmation is True
+    assert result.track is ReportTrack.CIVIC
+    assert result.analysis_method == "RULE"
+
+
+@pytest.mark.parametrize("description", ["안녕하세요", "테스트", "ㅋㅋㅋ"])
+def test_obviously_insufficient_text_does_not_claim_a_civic_match(
+    description: str,
+) -> None:
+    result = analyze_report(description=description, address="서울특별시 중구")
 
     assert result.categories == []
     assert result.suggested_agencies == []
@@ -127,7 +151,6 @@ def test_unclassified_report_requires_manual_confirmation() -> None:
     assert result.reasons == []
     assert result.needs_user_confirmation is True
     assert result.track is None
-    assert result.analysis_method == "RULE"
 
 
 def test_category_and_agency_results_are_deduplicated() -> None:
@@ -139,6 +162,16 @@ def test_category_and_agency_results_are_deduplicated() -> None:
     assert result.categories == [Category.TRAFFIC_ACCIDENT, Category.ROAD_DAMAGE]
     assert len(result.categories) == len(set(result.categories))
     assert result.suggested_agencies == route_categories(result.categories)
+
+
+def test_specific_category_takes_priority_over_other_civic() -> None:
+    result = analyze_report(
+        description="도로에 큰 포트홀이 생겨 차량이 지나가기 위험합니다.",
+        address="서울특별시 중구",
+    )
+
+    assert result.categories == [Category.ROAD_DAMAGE]
+    assert Category.OTHER_CIVIC not in result.categories
 
 
 def test_emergency_category_takes_priority_over_animal_carcass() -> None:

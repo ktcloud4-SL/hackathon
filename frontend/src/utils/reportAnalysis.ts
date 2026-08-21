@@ -75,7 +75,7 @@ export async function withMinimumDuration<T>(
 export function hasUsableRecommendation(
   analysis: ReportAnalysisResponse,
 ): boolean {
-  return analysis.categories.length > 0 && !analysis.needsUserConfirmation;
+  return analysis.categories.length > 0;
 }
 
 export interface AnalysisHighlights {
@@ -98,6 +98,14 @@ export function getAnalysisHighlights(
     reasons: analysis.reasons.slice(0, 3),
     track: analysis.track,
   };
+}
+
+export function getRecommendationGuide(
+  analysis: ReportAnalysisResponse | null,
+): string {
+  return analysis?.categories.includes("OTHER_CIVIC")
+    ? "유형이 정확하지 않아도 괜찮아요. 접수 후 담당기관이 신고 내용을 다시 확인합니다."
+    : "분석 결과를 확인하고 필요하면 신고 유형을 수정해 주세요.";
 }
 
 const emergencyCategories = new Set<Category>([

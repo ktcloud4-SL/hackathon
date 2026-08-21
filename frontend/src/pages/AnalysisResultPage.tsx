@@ -62,6 +62,11 @@ const categoryDetails: Record<
     description: "도로 위 동물 사체의 안전한 수거가 필요한 상황",
     icon: Building2,
   },
+  OTHER_CIVIC: {
+    label: "기타 생활·공공신고",
+    description: "관할 기관의 내용 확인과 담당부서 연결이 필요한 신고",
+    icon: Building2,
+  },
 };
 
 const agencyDetails: Record<AgencyType, { label: string; short: string }> = {

@@ -4,9 +4,11 @@ import test from "node:test";
 import type { AdminIncident } from "../src/types/admin.ts";
 import type { AgencyStatus, ReportTrack } from "../src/types/report.ts";
 import {
+  filterAdminIncidents,
   filterAgencyIncidents,
   formatTimelineMessage,
   getAgencyStatusLabel,
+  getCompactAgencyLabel,
   getIncidentStatusDetail,
   getTrackLabel,
 } from "../src/utils/incidentPresentation.ts";
@@ -19,12 +21,13 @@ function incident(
   agencyType: "ROAD" | "LOCAL_GOV",
   agencyStatus: AgencyStatus,
   description: string,
+  category: "TRAFFIC_ACCIDENT" | "ROAD_DAMAGE" | "OTHER_CIVIC" = track === "CIVIC" ? "ROAD_DAMAGE" : "TRAFFIC_ACCIDENT",
 ): AdminIncident {
   return {
     id,
     status: agencyStatus === "COMPLETED" ? "RESOLVED" : agencyStatus === "ASSIGNED" ? "OPEN" : "RESPONDING",
     severity: track === "CIVIC" ? "LOW" : "HIGH",
-    categories: track === "CIVIC" ? ["ROAD_DAMAGE"] : ["TRAFFIC_ACCIDENT"],
+    categories: [category],
     track,
     report: {
       id,
@@ -57,6 +60,20 @@ test("agency track, status, and search filters combine without changing API data
   assert.deepEqual(filterAgencyIncidents(incidents, "ROAD", "포트홀", "CIVIC", "ASSIGNED").map(({ id }) => id), [2]);
 });
 
+test("admin search, track, status, and severity filters combine", () => {
+  const incidents = [
+    incident(1, "EMERGENCY", "ROAD", "RECEIVED", "복합 교통사고"),
+    incident(2, "CIVIC", "ROAD", "ASSIGNED", "도로 포트홀", "ROAD_DAMAGE"),
+    incident(3, "CIVIC", "LOCAL_GOV", "ASSIGNED", "공원 시설 파손", "OTHER_CIVIC"),
+  ];
+
+  assert.deepEqual(filterAdminIncidents(incidents, "", "ALL", "ALL", "ALL").map(({ id }) => id), [1, 2, 3]);
+  assert.deepEqual(filterAdminIncidents(incidents, "", "EMERGENCY", "ALL", "ALL").map(({ id }) => id), [1]);
+  assert.deepEqual(filterAdminIncidents(incidents, "", "CIVIC", "ALL", "ALL").map(({ id }) => id), [2, 3]);
+  assert.deepEqual(filterAdminIncidents(incidents, "", "CIVIC", "ALL", "LOW").map(({ id }) => id), [2, 3]);
+  assert.deepEqual(filterAdminIncidents(incidents, "시설", "CIVIC", "OPEN", "LOW").map(({ id }) => id), [3]);
+});
+
 test("LOCAL_GOV civic-only list still supports track and status filters", () => {
   const incidents = [incident(4, "CIVIC", "LOCAL_GOV", "IN_PROGRESS", "동물 사체 처리")];
 
@@ -70,6 +87,15 @@ test("track and agency status labels remain distinct and track-aware", () => {
   assert.equal(getAgencyStatusLabel("EMERGENCY", "DISPATCHED"), "출동");
   assert.equal(getAgencyStatusLabel("CIVIC", "DISPATCHED"), "처리 준비");
   assert.equal(getAgencyStatusLabel("CIVIC", "IN_PROGRESS"), "처리 중");
+});
+
+test("admin incident cards use distinct compact labels for every agency", () => {
+  assert.deepEqual(
+    (["POLICE", "FIRE", "KEPCO", "ROAD", "GAS", "LOCAL_GOV"] as const).map(
+      getCompactAgencyLabel,
+    ),
+    ["경찰", "소방", "한전", "도로", "가스", "지자체"],
+  );
 });
 
 test("timeline status messages never expose backend enums", () => {
