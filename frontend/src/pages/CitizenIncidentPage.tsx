@@ -55,6 +55,7 @@ const agencyLabels: Record<AgencyType, { label: string; short: string }> = {
   KEPCO: { label: "한국전력", short: "한전" },
   ROAD: { label: "도로관리", short: "도로" },
   GAS: { label: "가스안전", short: "가스" },
+  LOCAL_GOV: { label: "관할 지자체", short: "지자체" },
 };
 
 const agencyStatusLabels: Record<AgencyStatus, string> = {
@@ -64,6 +65,15 @@ const agencyStatusLabels: Record<AgencyStatus, string> = {
   ARRIVED: "현장 도착",
   IN_PROGRESS: "대응 중",
   COMPLETED: "대응 완료",
+};
+
+const civicAgencyStatusLabels: Record<AgencyStatus, string> = {
+  ASSIGNED: "담당 배정",
+  RECEIVED: "접수 완료",
+  DISPATCHED: "처리 준비",
+  ARRIVED: "현장 확인",
+  IN_PROGRESS: "처리 중",
+  COMPLETED: "처리 완료",
 };
 
 const incidentStatusLabels: Record<IncidentStatus, { label: string; copy: string }> = {
@@ -87,6 +97,7 @@ const categoryLabels: Record<Category, string> = {
   FIRE_RISK: "화재 위험",
   ROAD_DAMAGE: "도로 파손",
   GAS_RISK: "가스 위험",
+  ANIMAL_CARCASS: "동물 사체",
 };
 
 type ConnectionState = "connecting" | "live" | "retrying" | "error";
@@ -212,7 +223,16 @@ export function CitizenIncidentPage() {
     );
   }
 
-  const statusDetail = incidentStatusLabels[incident.status];
+  const isCivic = incident.track === "CIVIC";
+  const statusDetail = isCivic
+    ? {
+        OPEN: { label: "담당기관 접수 대기", copy: "신고 내용에 맞는 담당기관에 연결되었습니다." },
+        RESPONDING: { label: "공공신고 처리 중", copy: "담당기관이 신고를 확인하고 처리 중입니다." },
+        RESOLVED: { label: "처리 완료", copy: "담당기관의 신고 처리가 완료되었습니다." },
+        CLOSED: { label: "처리 종료", copy: "공공신고 처리가 최종 종료되었습니다." },
+      }[incident.status]
+    : incidentStatusLabels[incident.status];
+  const currentAgencyStatusLabels = isCivic ? civicAgencyStatusLabels : agencyStatusLabels;
   const connectionDetail = connectionContent(connection);
   const ConnectionIcon = connectionDetail.icon;
 
@@ -247,6 +267,9 @@ export function CitizenIncidentPage() {
             <span className="incident-icon"><Siren size={26} /></span>
             <div>
               <span>Incident #{incident.id}</span>
+              <span className={`report-track-pill track-${incident.track.toLowerCase()}`}>
+                {isCivic ? "생활·공공신고" : "긴급·복합대응"}
+              </span>
               <h1>{statusDetail.label}</h1>
               <p>{statusDetail.copy}</p>
             </div>
@@ -259,7 +282,7 @@ export function CitizenIncidentPage() {
           </div>
           <div className="overall-progress">
             <div>
-              <span>전체 대응 진행률</span>
+               <span>{isCivic ? "전체 처리 진행률" : "전체 대응 진행률"}</span>
               <strong>{progress}%</strong>
             </div>
             <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
@@ -272,7 +295,7 @@ export function CitizenIncidentPage() {
               <div className="flow-card-heading">
                 <div>
                   <span className="live-dot"><span /> LIVE</span>
-                  <h2>기관별 대응 현황</h2>
+                   <h2>{isCivic ? "기관별 처리 현황" : "기관별 대응 현황"}</h2>
                 </div>
                 <span className="result-count">{incident.agencies.length}개 기관</span>
               </div>
@@ -292,7 +315,7 @@ export function CitizenIncidentPage() {
                         </div>
                         <span className={`agency-current-status status-${agency.status.toLowerCase()}`}>
                           {agency.status === "COMPLETED" && <Check size={14} />}
-                          {agencyStatusLabels[agency.status]}
+                           {currentAgencyStatusLabels[agency.status]}
                         </span>
                       </div>
                       <div className="agency-stepper" aria-label={`${detail.label} 대응 단계`}>
@@ -300,12 +323,15 @@ export function CitizenIncidentPage() {
                           <span
                             key={status}
                             className={index <= statusIndex ? "done" : ""}
-                            title={agencyStatusLabels[status]}
+                             title={currentAgencyStatusLabels[status]}
                           />
                         ))}
                       </div>
                       <div className="agency-step-labels">
-                        <span>배정</span><span>접수</span><span>출동</span><span>도착</span><span>대응</span><span>완료</span>
+                         {(isCivic
+                           ? ["배정", "접수", "준비", "확인", "처리", "완료"]
+                           : ["배정", "접수", "출동", "도착", "대응", "완료"]
+                         ).map((label) => <span key={label}>{label}</span>)}
                       </div>
                     </article>
                   );
@@ -385,7 +411,7 @@ export function CitizenIncidentPage() {
 
       <footer>
         <span>OneReport</span>
-        <p>한 번의 신고, 여러 기관의 공동대응</p>
+         <p>한 번의 신고, 필요한 기관으로 연결</p>
       </footer>
     </div>
   );

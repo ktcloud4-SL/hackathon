@@ -28,6 +28,7 @@ function isReportResult(value: unknown): value is CreateReportResponse {
     typeof value.incident.id === "number" &&
     typeof value.incident.status === "string" &&
     typeof value.incident.severity === "string" &&
+    typeof value.incident.track === "string" &&
     Array.isArray(value.incident.categories) &&
     value.incident.categories.every((category) => typeof category === "string") &&
     typeof value.incident.createdAt === "string" &&

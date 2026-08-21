@@ -73,6 +73,7 @@ const agencyLabel: Record<AgencyType, string> = {
   KEPCO: "한국전력",
   ROAD: "도로관리",
   GAS: "가스안전",
+  LOCAL_GOV: "관할 지자체",
 };
 
 const agencyStatusLabel: Record<AgencyStatus, string> = {
@@ -91,9 +92,10 @@ const categoryLabel: Record<Category, string> = {
   FIRE_RISK: "화재위험",
   ROAD_DAMAGE: "도로위험",
   GAS_RISK: "가스위험",
+  ANIMAL_CARCASS: "동물 사체",
 };
 
-const allAgencies: AgencyType[] = ["POLICE", "FIRE", "KEPCO", "ROAD", "GAS"];
+const allAgencies: AgencyType[] = ["POLICE", "FIRE", "KEPCO", "ROAD", "GAS", "LOCAL_GOV"];
 
 function formatTime(dateTime: string) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -518,8 +520,13 @@ export function AdminDashboardPage() {
                           <span><Clock3 size={13} />{formatTime(incident.updatedAt)}</span>
                         </span>
                         <span className="incident-item-bottom">
-                          <span className={`severity-chip severity-${incident.severity.toLowerCase()}`}>
-                            {severityLabel[incident.severity]}
+                          <span className="incident-item-classification">
+                            <span className={`report-track-pill track-${incident.track.toLowerCase()}`}>
+                              {incident.track === "CIVIC" ? "생활·공공" : "긴급·복합"}
+                            </span>
+                            <span className={`severity-chip severity-${incident.severity.toLowerCase()}`}>
+                              {severityLabel[incident.severity]}
+                            </span>
                           </span>
                           <span className="agency-stack">
                             {incident.agencies.slice(0, 4).map((agency) => (
@@ -548,6 +555,9 @@ export function AdminDashboardPage() {
                   <div>
                     <span className="detail-id">INCIDENT #{String(selectedIncident.id).padStart(3, "0")}</span>
                     <div className="detail-badges">
+                      <span className={`report-track-pill track-${selectedIncident.track.toLowerCase()}`}>
+                        {selectedIncident.track === "CIVIC" ? "생활·공공신고" : "긴급·복합대응"}
+                      </span>
                       <span className={`severity-badge severity-${selectedIncident.severity.toLowerCase()}`}>
                         <AlertTriangle size={13} />{severityLabel[selectedIncident.severity]}
                       </span>
@@ -613,7 +623,7 @@ export function AdminDashboardPage() {
 
               <section className="detail-section" id="agencies">
                 <div className="detail-section-heading">
-                  <div><Building2 size={17} /><h4>대응기관</h4></div>
+                   <div><Building2 size={17} /><h4>{selectedIncident.track === "CIVIC" ? "처리 담당기관" : "대응기관"}</h4></div>
                   <span>{selectedIncident.agencies.length}개 기관 참여</span>
                 </div>
                 <div className="agency-status-grid">

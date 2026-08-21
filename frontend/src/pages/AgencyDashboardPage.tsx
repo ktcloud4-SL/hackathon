@@ -54,6 +54,7 @@ import type {
   AgencyType,
   Category,
   IncidentStatus,
+  ReportTrack,
   Severity,
 } from "../types/report";
 import "./agency-dashboard.css";
@@ -120,6 +121,16 @@ const agencyConfigs: Record<AgencyType, AgencyConfig> = {
     icon: Gauge,
     operator: "가스 안전요원",
   },
+  LOCAL_GOV: {
+    type: "LOCAL_GOV",
+    slug: "local-gov",
+    name: "관할 지자체",
+    fullName: "관할 지방자치단체",
+    centerName: "생활·공공신고 담당부서",
+    theme: "local-gov",
+    icon: Building2,
+    operator: "지자체 담당자",
+  },
 };
 
 const slugToAgency: Record<string, AgencyType> = {
@@ -128,6 +139,7 @@ const slugToAgency: Record<string, AgencyType> = {
   kepco: "KEPCO",
   road: "ROAD",
   gas: "GAS",
+  "local-gov": "LOCAL_GOV",
 };
 
 const agencyStatusOrder: AgencyStatus[] = [
@@ -156,6 +168,27 @@ const nextActionLabel: Partial<Record<AgencyStatus, string>> = {
   IN_PROGRESS: "대응 완료하기",
 };
 
+const civicAgencyStatusLabel: Record<AgencyStatus, string> = {
+  ASSIGNED: "담당 배정",
+  RECEIVED: "접수",
+  DISPATCHED: "처리 준비",
+  ARRIVED: "현장 확인",
+  IN_PROGRESS: "처리 중",
+  COMPLETED: "완료",
+};
+
+const civicNextActionLabel: Partial<Record<AgencyStatus, string>> = {
+  ASSIGNED: "신고 접수하기",
+  RECEIVED: "처리 준비 시작",
+  DISPATCHED: "현장 확인 처리",
+  ARRIVED: "처리 시작하기",
+  IN_PROGRESS: "처리 완료하기",
+};
+
+function getAgencyStatusLabel(track: ReportTrack, status: AgencyStatus) {
+  return track === "CIVIC" ? civicAgencyStatusLabel[status] : agencyStatusLabel[status];
+}
+
 const incidentStatusLabel: Record<IncidentStatus, string> = {
   OPEN: "접수",
   RESPONDING: "대응 중",
@@ -177,6 +210,7 @@ const categoryLabel: Record<Category, string> = {
   FIRE_RISK: "화재위험",
   ROAD_DAMAGE: "도로위험",
   GAS_RISK: "가스위험",
+  ANIMAL_CARCASS: "동물 사체",
 };
 
 function getAgencyTypeFromPath(): AgencyType {
@@ -372,7 +406,7 @@ export function AgencyDashboardPage() {
     setIsActionPending(true);
     try {
       updateIncident(await changeMyAgencyStatus(selectedIncident.id, agencyType, nextStatus));
-      setToast(`${agencyStatusLabel[nextStatus]} 상태로 변경되었습니다.`);
+       setToast(`${getAgencyStatusLabel(selectedIncident.track, nextStatus)} 상태로 변경되었습니다.`);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "기관 상태를 변경하지 못했습니다.");
     } finally {
@@ -500,7 +534,7 @@ export function AgencyDashboardPage() {
                         <span className="agency-card-top"><strong>Incident #{String(incident.id).padStart(3, "0")}</strong><span className={`agency-card-status status-${status.toLowerCase()}`}><i />{agencyStatusLabel[status]}</span></span>
                         <span className="agency-card-description">{incident.report.description}</span>
                         <span className="agency-card-location"><MapPin size={12} />{incident.report.address}</span>
-                        <span className="agency-card-footer"><span className={`agency-severity-label severity-${incident.severity.toLowerCase()}`}>{severityLabel[incident.severity]}</span><time>{formatElapsed(incident.updatedAt)}</time></span>
+                         <span className="agency-card-footer"><span><span className={`report-track-pill track-${incident.track.toLowerCase()}`}>{incident.track === "CIVIC" ? "생활·공공" : "긴급·복합"}</span><span className={`agency-severity-label severity-${incident.severity.toLowerCase()}`}>{severityLabel[incident.severity]}</span></span><time>{formatElapsed(incident.updatedAt)}</time></span>
                       </span>
                       <ChevronRight size={17} />
                     </button>
@@ -512,7 +546,7 @@ export function AgencyDashboardPage() {
 
             <article className="agency-incident-detail">
               <div className="agency-detail-hero">
-                <div className="agency-detail-top"><div><span>INCIDENT #{String(selectedIncident.id).padStart(3, "0")}</span><div><b className={`severity-${selectedIncident.severity.toLowerCase()}`}><AlertTriangle size={12} />{severityLabel[selectedIncident.severity]}</b><b className={`incident-${selectedIncident.status.toLowerCase()}`}>{incidentStatusLabel[selectedIncident.status]}</b></div></div><time>{formatElapsed(selectedIncident.updatedAt)} 업데이트</time></div>
+                 <div className="agency-detail-top"><div><span>INCIDENT #{String(selectedIncident.id).padStart(3, "0")}</span><div><b className={`report-track-pill track-${selectedIncident.track.toLowerCase()}`}>{selectedIncident.track === "CIVIC" ? "생활·공공신고" : "긴급·복합대응"}</b><b className={`severity-${selectedIncident.severity.toLowerCase()}`}><AlertTriangle size={12} />{severityLabel[selectedIncident.severity]}</b><b className={`incident-${selectedIncident.status.toLowerCase()}`}>{incidentStatusLabel[selectedIncident.status]}</b></div></div><time>{formatElapsed(selectedIncident.updatedAt)} 업데이트</time></div>
                 <h3>{selectedIncident.report.description}</h3>
                 <p><MapPin size={14} />{selectedIncident.report.address}</p>
                 <div className="agency-category-list">{selectedIncident.categories.map((category) => <span key={category}>{categoryLabel[category]}</span>)}</div>
@@ -524,29 +558,29 @@ export function AgencyDashboardPage() {
               </div>
 
               <section className="my-response-card">
-                <div className="my-response-heading"><div><span className="response-agency-icon"><AgencyIcon size={18} /></span><div><small>{config.name} 대응 상태</small><strong>{agencyStatusLabel[myStatus]}</strong></div></div><span className="response-live"><i />실시간 공유 중</span></div>
+                 <div className="my-response-heading"><div><span className="response-agency-icon"><AgencyIcon size={18} /></span><div><small>{config.name} {selectedIncident.track === "CIVIC" ? "처리" : "대응"} 상태</small><strong>{getAgencyStatusLabel(selectedIncident.track, myStatus)}</strong></div></div><span className="response-live"><i />실시간 공유 중</span></div>
                 <div className="response-stepper">
                   {agencyStatusOrder.map((status, index) => (
                     <div key={status} className={`response-step ${index < myStatusIndex ? "complete" : ""} ${index === myStatusIndex ? "current" : ""}`}>
                       <span>{index < myStatusIndex ? <Check size={13} /> : index + 1}</span>
-                      <small>{agencyStatusLabel[status]}</small>
+                       <small>{getAgencyStatusLabel(selectedIncident.track, status)}</small>
                     </div>
                   ))}
                 </div>
                 {nextStatus ? (
-                  <button className="next-status-button" type="button" onClick={() => void handleNextStatus()} disabled={isActionPending}><span><Crosshair size={17} />{nextActionLabel[myStatus]}</span><ChevronRight size={18} /></button>
+                   <button className="next-status-button" type="button" onClick={() => void handleNextStatus()} disabled={isActionPending}><span><Crosshair size={17} />{selectedIncident.track === "CIVIC" ? civicNextActionLabel[myStatus] : nextActionLabel[myStatus]}</span><ChevronRight size={18} /></button>
                 ) : (
                   <div className="response-complete"><CheckCircle2 size={18} />이 기관의 현장 대응이 완료되었습니다.</div>
                 )}
               </section>
 
               <section className="agency-detail-section joint-agencies">
-                <div className="agency-section-heading"><div><Building2 size={16} /><h4>공동 대응기관</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}><MessageSquarePlus size={15} />추가 기관 요청</button></div>
+                 <div className="agency-section-heading"><div><Building2 size={16} /><h4>{selectedIncident.track === "CIVIC" ? "처리 담당기관" : "공동 대응기관"}</h4></div><button id="support" type="button" onClick={() => setSupportModalOpen(true)} disabled={availableAgencies.length === 0 || ["RESOLVED", "CLOSED"].includes(selectedIncident.status)}><MessageSquarePlus size={15} />추가 기관 요청</button></div>
                 <div className="joint-agency-grid">
                   {selectedIncident.agencies.map((agency) => {
                     const itemConfig = agencyConfigs[agency.agencyType];
                     const ItemIcon = itemConfig.icon;
-                    return <div className={agency.agencyType === agencyType ? "mine" : ""} key={agency.agencyType}><span className={`joint-icon theme-${itemConfig.theme}`}><ItemIcon size={16} /></span><div><strong>{itemConfig.name}{agency.agencyType === agencyType && <em>내 기관</em>}</strong><span className={`status-${agency.status.toLowerCase()}`}><i />{agencyStatusLabel[agency.status]}</span></div></div>;
+                     return <div className={agency.agencyType === agencyType ? "mine" : ""} key={agency.agencyType}><span className={`joint-icon theme-${itemConfig.theme}`}><ItemIcon size={16} /></span><div><strong>{itemConfig.name}{agency.agencyType === agencyType && <em>내 기관</em>}</strong><span className={`status-${agency.status.toLowerCase()}`}><i />{getAgencyStatusLabel(selectedIncident.track, agency.status)}</span></div></div>;
                   })}
                 </div>
               </section>

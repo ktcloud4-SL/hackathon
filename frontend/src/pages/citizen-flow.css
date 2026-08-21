@@ -342,6 +342,11 @@
   background: #7865a8;
 }
 
+.citizen-flow-shell .agency-symbol.agency-local_gov,
+.agency-response.agency-local_gov .agency-symbol {
+  background: #5557a6;
+}
+
 .assigned-agency-list small {
   display: block;
   overflow: hidden;

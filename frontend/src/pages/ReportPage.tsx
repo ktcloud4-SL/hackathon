@@ -457,11 +457,11 @@ export function ReportPage() {
               <ol>
                 <li className="active">
                   <span>1</span>
-                  <div><strong>유형 확인</strong><small>사고 유형을 선택해요</small></div>
+                  <div><strong>유형 확인</strong><small>추천 유형을 확인해요</small></div>
                 </li>
                 <li>
                   <span>2</span>
-                  <div><strong>기관 배정</strong><small>필요한 기관을 연결해요</small></div>
+                  <div><strong>경로·기관 연결</strong><small>알맞은 처리 경로로 연결해요</small></div>
                 </li>
                 <li>
                   <span>3</span>
@@ -475,7 +475,7 @@ export function ReportPage() {
 
       <footer>
         <span>OneReport</span>
-        <p>한 번의 신고, 여러 기관의 공동대응</p>
+        <p>모든 공공신고를 위한 하나의 진입점</p>
       </footer>
 
       {isCategoryModalOpen && (

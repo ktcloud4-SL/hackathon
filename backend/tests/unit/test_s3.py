@@ -43,6 +43,28 @@ class FakeS3Client:
         return f"https://example.test/{Params['Key']}?signature=test"
 
 
+def test_custom_endpoint_uses_path_style_for_minio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_client(service_name: str, **kwargs: Any) -> FakeS3Client:
+        captured.update(service_name=service_name, **kwargs)
+        return FakeS3Client()
+
+    monkeypatch.setattr("app.integrations.s3.boto3.client", fake_client)
+
+    S3ObjectStorage(
+        bucket_name="onereport-v2",
+        aws_region="ap-northeast-2",
+        endpoint_url="http://127.0.0.1:59000",
+    )
+
+    assert captured["service_name"] == "s3"
+    assert captured["endpoint_url"] == "http://127.0.0.1:59000"
+    assert captured["config"].s3["addressing_style"] == "path"
+
+
 @pytest.mark.asyncio
 async def test_upload_uses_unique_key_and_create_only_precondition() -> None:
     client = FakeS3Client()

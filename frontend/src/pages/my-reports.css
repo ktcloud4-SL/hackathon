@@ -274,6 +274,13 @@
   gap: 11px;
 }
 
+.report-card-badges {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .report-status-icon {
   display: grid;
   width: 40px;

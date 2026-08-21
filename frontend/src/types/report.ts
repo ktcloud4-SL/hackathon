@@ -4,9 +4,11 @@ export type Category =
   | "ELECTRIC_DAMAGE"
   | "FIRE_RISK"
   | "ROAD_DAMAGE"
-  | "GAS_RISK";
+  | "GAS_RISK"
+  | "ANIMAL_CARCASS";
 
-export type AgencyType = "POLICE" | "FIRE" | "KEPCO" | "ROAD" | "GAS";
+export type AgencyType = "POLICE" | "FIRE" | "KEPCO" | "ROAD" | "GAS" | "LOCAL_GOV";
+export type ReportTrack = "EMERGENCY" | "CIVIC";
 export type AgencyStatus =
   | "ASSIGNED"
   | "RECEIVED"
@@ -24,6 +26,7 @@ export interface ReportAnalysisInput {
 
 export interface ReportAnalysisResponse {
   categories: Category[];
+  track: ReportTrack | null;
   severity: Severity;
   suggestedAgencies: AgencyType[];
   summary: string;
@@ -58,6 +61,7 @@ export interface CreateReportResponse {
     status: IncidentStatus;
     severity: Severity;
     categories: Category[];
+    track: ReportTrack;
     createdAt: string;
     updatedAt: string;
   };
@@ -80,6 +84,7 @@ export interface MyReportItem {
     status: IncidentStatus;
     severity: Severity;
     categories: Category[];
+    track: ReportTrack;
     createdAt: string;
     updatedAt: string;
   };
@@ -91,6 +96,7 @@ export interface AgencyIncidentItem {
   agencyStatus: AgencyStatus;
   severity: Severity;
   categories: Category[];
+  track: ReportTrack;
   description: string;
   address: string;
   assignedAt: string;

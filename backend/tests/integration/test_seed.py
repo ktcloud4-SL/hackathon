@@ -18,6 +18,7 @@ EXPECTED_ACCOUNTS = {
     "kepco@onereport.com": ("AGENCY", "KEPCO"),
     "road@onereport.com": ("AGENCY", "ROAD"),
     "gas@onereport.com": ("AGENCY", "GAS"),
+    "localgov@onereport.com": ("AGENCY", "LOCAL_GOV"),
     "admin@onereport.com": ("ADMIN", None),
 }
 
@@ -64,6 +65,7 @@ async def _create_seed_database(database_path: Path) -> str:
                     "KEPCO": "한국전력",
                     "ROAD": "도로관리기관",
                     "GAS": "가스안전기관",
+                    "LOCAL_GOV": "관할 지자체",
                 }.items()
             ]
         )
@@ -95,7 +97,7 @@ async def test_seed_creates_all_demo_accounts_with_agencies_and_password(
     await seed_module.seed()
 
     users = await _load_users(database_url)
-    assert len(users) == 7
+    assert len(users) == 8
     assert {user.email for user in users} == set(EXPECTED_ACCOUNTS)
     for user in users:
         expected_role, expected_agency = EXPECTED_ACCOUNTS[user.email]
@@ -146,7 +148,7 @@ async def test_seed_is_idempotent_and_updates_an_existing_demo_account(
                 )
             ).all()
         )
-        assert user_count == 7
+        assert user_count == 8
         assert len(police_accounts) == 1
         police = police_accounts[0]
         assert police.id == existing_id

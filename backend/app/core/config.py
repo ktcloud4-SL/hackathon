@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://onereport:onereport@localhost:5432/onereport"
 
     aws_region: str | None = None
+    s3_endpoint_url: str | None = None
     s3_bucket: str | None = Field(
         default=None,
         validation_alias=AliasChoices(

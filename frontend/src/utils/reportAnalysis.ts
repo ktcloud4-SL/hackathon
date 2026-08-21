@@ -1,5 +1,7 @@
 import type {
   AgencyType,
+  Category,
+  ReportTrack,
   ReportAnalysisResponse,
   Severity,
 } from "../types/report";
@@ -81,6 +83,7 @@ export interface AnalysisHighlights {
   severity: Severity;
   suggestedAgencies: AgencyType[];
   reasons: string[];
+  track: ReportTrack | null;
 }
 
 export function getAnalysisHighlights(
@@ -93,5 +96,20 @@ export function getAnalysisHighlights(
     severity: analysis.severity,
     suggestedAgencies: analysis.suggestedAgencies,
     reasons: analysis.reasons.slice(0, 3),
+    track: analysis.track,
   };
+}
+
+const emergencyCategories = new Set<Category>([
+  "TRAFFIC_ACCIDENT",
+  "HUMAN_INJURY",
+  "ELECTRIC_DAMAGE",
+  "FIRE_RISK",
+  "GAS_RISK",
+]);
+
+export function deriveTrackPreview(categories: Category[]): ReportTrack | null {
+  if (categories.length === 0) return null;
+  if (categories.some((category) => emergencyCategories.has(category))) return "EMERGENCY";
+  return "CIVIC";
 }

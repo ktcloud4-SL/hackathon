@@ -33,3 +33,13 @@ def test_s3_prefix_accepts_current_and_legacy_env_names(
     settings = Settings()
 
     assert settings.s3_prefix == "incoming-reports"
+
+
+def test_s3_endpoint_url_is_available_for_local_minio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("S3_ENDPOINT_URL", "http://127.0.0.1:59000")
+
+    settings = Settings()
+
+    assert settings.s3_endpoint_url == "http://127.0.0.1:59000"

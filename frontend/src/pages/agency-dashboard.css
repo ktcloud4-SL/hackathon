@@ -44,6 +44,7 @@
 .agency-theme-kepco { --agency-accent: #4d63a4; --agency-accent-dark: #35477e; --agency-pale: #eceffa; --agency-sidebar: #191d2d; }
 .agency-theme-road { --agency-accent: #a77a22; --agency-accent-dark: #765514; --agency-pale: #faf1da; --agency-sidebar: #282217; }
 .agency-theme-gas { --agency-accent: #34765a; --agency-accent-dark: #235540; --agency-pale: #e7f3ed; --agency-sidebar: #16251e; }
+.agency-theme-local-gov { --agency-accent: #5557a6; --agency-accent-dark: #3c3e7c; --agency-pale: #eeeefe; --agency-sidebar: #1b1c36; }
 
 .agency-sidebar {
   position: fixed;
@@ -241,6 +242,7 @@
 .theme-kepco { color: #4d63a4; background: #eceffa; }
 .theme-road { color: #a77a22; background: #faf1da; }
 .theme-gas { color: #34765a; background: #e7f3ed; }
+.theme-local-gov { color: #5557a6; background: #eeeefe; }
 .joint-agency-grid strong { display: flex; align-items: center; gap: 5px; font-size: 13px; }
 .joint-agency-grid strong em { padding: 2px 4px; color: var(--agency-accent); border-radius: 4px; background: var(--agency-pale); font-size: 11px; font-style: normal; }
 .joint-agency-grid div > div > span { display: flex; align-items: center; gap: 4px; width: max-content; margin-top: 3px; font-size: 12px; font-weight: 700; }

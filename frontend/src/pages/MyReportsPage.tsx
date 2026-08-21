@@ -47,6 +47,7 @@ const categoryLabels: Record<Category, string> = {
   FIRE_RISK: "화재 위험",
   ROAD_DAMAGE: "도로 파손",
   GAS_RISK: "가스 위험",
+  ANIMAL_CARCASS: "동물 사체",
 };
 
 function formatReportDate(value: string) {
@@ -190,6 +191,7 @@ export function MyReportsPage() {
           <section className="my-report-list" aria-label="신고 목록">
             {filteredReports.map((report) => {
               const status = statusDetails[report.incident.status];
+              const isCivic = report.incident.track === "CIVIC";
               return (
                 <a
                   key={report.id}
@@ -202,10 +204,13 @@ export function MyReportsPage() {
                       <span className={`report-status-icon status-${report.incident.status.toLowerCase()}`}><StatusIcon status={report.incident.status} /></span>
                       <div>
                         <span>Incident #{report.incident.id}</span>
-                        <strong>{status.label}</strong>
-                        <small>{status.copy}</small>
+                        <strong>{isCivic && report.incident.status === "RESPONDING" ? "공공신고 처리 중" : status.label}</strong>
+                        <small>{isCivic ? "담당기관이 신고를 확인하고 처리하고 있습니다." : status.copy}</small>
                       </div>
-                      <span className={`report-severity severity-${report.incident.severity.toLowerCase()}`}>긴급도 {severityLabels[report.incident.severity]}</span>
+                      <span className="report-card-badges">
+                        <span className={`report-track-pill track-${report.incident.track.toLowerCase()}`}>{isCivic ? "생활·공공신고" : "긴급·복합대응"}</span>
+                        <span className={`report-severity severity-${report.incident.severity.toLowerCase()}`}>긴급도 {severityLabels[report.incident.severity]}</span>
+                      </span>
                     </div>
                     <p className="report-card-description">{report.description}</p>
                     <div className="report-card-tags">
@@ -229,7 +234,7 @@ export function MyReportsPage() {
         </section>
       </main>
 
-      <footer><span>OneReport</span><p>한 번의 신고, 여러 기관의 공동대응</p></footer>
+       <footer><span>OneReport</span><p>한 번의 신고, 필요한 기관으로 연결</p></footer>
     </div>
   );
 }

@@ -66,6 +66,51 @@ a {
   min-height: 100vh;
 }
 
+.v2-v1-fallback-link {
+  position: fixed;
+  z-index: 200;
+  right: 14px;
+  bottom: 14px;
+  padding: 8px 11px;
+  color: #3f5148;
+  border: 1px solid rgba(14, 107, 78, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 7px 22px rgba(31, 49, 40, 0.12);
+  backdrop-filter: blur(10px);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.v2-v1-fallback-link:hover {
+  color: white;
+  background: var(--green);
+}
+
+.report-track-pill {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.report-track-pill.track-emergency {
+  color: #a94c27;
+  background: #fff0e8;
+}
+
+.report-track-pill.track-civic {
+  color: #256b53;
+  background: #e7f4ed;
+}
+
 .site-header {
   position: sticky;
   top: 0;

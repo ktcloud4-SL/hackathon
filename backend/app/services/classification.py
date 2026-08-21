@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from app.schemas.analysis import ReportAnalysisResponse
 from app.schemas.domain import Category, Severity
-from app.services.routing import route_categories
+from app.services.routing import derive_report_track, route_categories
 
 
 @dataclass(frozen=True)
@@ -124,6 +124,16 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "lpg 누출",
         ),
     ),
+    CategoryRule(
+        Category.ANIMAL_CARCASS,
+        "동물 사체",
+        (
+            "동물 사체",
+            "동물사체",
+            "로드킬",
+            "죽은 동물",
+        ),
+    ),
 )
 
 
@@ -177,6 +187,7 @@ def analyze_report(*, description: str, address: str) -> ReportAnalysisResponse:
     if not categories:
         return ReportAnalysisResponse(
             categories=[],
+            track=None,
             severity=Severity.MEDIUM,
             suggested_agencies=[],
             summary="자동으로 사고 유형을 분류하지 못했습니다. 사고 유형을 직접 확인해 주세요.",
@@ -196,6 +207,7 @@ def analyze_report(*, description: str, address: str) -> ReportAnalysisResponse:
 
     return ReportAnalysisResponse(
         categories=categories,
+        track=derive_report_track(categories),
         severity=_recommend_severity(categories),
         suggested_agencies=route_categories(categories),
         summary=summary,

@@ -35,7 +35,7 @@ class Agency(Base):
     __tablename__ = "agencies"
     __table_args__ = (
         CheckConstraint(
-            "code IN ('POLICE', 'FIRE', 'KEPCO', 'ROAD', 'GAS')",
+            "code IN ('POLICE', 'FIRE', 'KEPCO', 'ROAD', 'GAS', 'LOCAL_GOV')",
             name="ck_agencies_code",
         ),
     )

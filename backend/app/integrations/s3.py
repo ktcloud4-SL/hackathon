@@ -5,6 +5,7 @@ from typing import Any
 from uuid import uuid4
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from app.integrations.errors import ObjectStorageError
@@ -17,6 +18,7 @@ class S3ObjectStorage:
         *,
         bucket_name: str,
         aws_region: str | None = None,
+        endpoint_url: str | None = None,
         object_prefix: str = "reports",
         presigned_url_expire_seconds: int = 900,
         client: Any | None = None,
@@ -28,7 +30,13 @@ class S3ObjectStorage:
         self._bucket_name = bucket_name
         self._object_prefix = object_prefix.strip("/")
         self._presigned_url_expire_seconds = presigned_url_expire_seconds
-        self._client = client or boto3.client("s3", region_name=aws_region)
+        client_options: dict[str, Any] = {"region_name": aws_region}
+        if endpoint_url:
+            client_options.update(
+                endpoint_url=endpoint_url,
+                config=Config(s3={"addressing_style": "path"}),
+            )
+        self._client = client or boto3.client("s3", **client_options)
 
     async def upload(
         self,

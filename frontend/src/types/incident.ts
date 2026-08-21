@@ -3,6 +3,7 @@ import type {
   AgencyType,
   Category,
   IncidentStatus,
+  ReportTrack,
   Severity,
 } from "./report";
 
@@ -37,6 +38,7 @@ export interface IncidentDetail {
   status: IncidentStatus;
   severity: Severity;
   categories: Category[];
+  track: ReportTrack;
   report: {
     id: number;
     description: string;
