@@ -46,6 +46,52 @@ def test_analyzes_animal_carcass_as_civic_report(description: str) -> None:
 
 
 @pytest.mark.parametrize(
+    ("description", "category"),
+    [
+        ("차가 부딪혔어요.", Category.TRAFFIC_ACCIDENT),
+        ("차량끼리 충돌했어요.", Category.TRAFFIC_ACCIDENT),
+        ("사람이 다쳤어요.", Category.HUMAN_INJURY),
+        ("숨을 잘 못 쉬어요.", Category.HUMAN_INJURY),
+        ("전기가 튀고 스파크가 나요.", Category.ELECTRIC_DAMAGE),
+        ("합선된 것 같아요.", Category.ELECTRIC_DAMAGE),
+        ("연기가 많이 나고 타는 냄새가 나요.", Category.FIRE_RISK),
+        ("도로가 파이고 보도블록이 깨졌어요.", Category.ROAD_DAMAGE),
+        ("아스팔트가 꺼져 도로에 구멍이 났어요.", Category.ROAD_DAMAGE),
+        ("가스 배관이 깨져 가스 누출이 의심돼요.", Category.GAS_RISK),
+        ("죽은 고양이가 도로에 있어요.", Category.ANIMAL_CARCASS),
+        ("죽은 개가 방치돼 있어요.", Category.ANIMAL_CARCASS),
+    ],
+)
+def test_analyzes_common_colloquial_phrases(
+    description: str,
+    category: Category,
+) -> None:
+    result = analyze_report(description=description, address="서울특별시 중구")
+
+    assert category in result.categories
+    assert Category.OTHER_CIVIC not in result.categories
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "공원에서 동물을 발견했습니다.",
+        "사체라는 단어가 적힌 안내판이 훼손됐습니다.",
+        "가스레인지가 오래됐습니다.",
+        "불꽃놀이 소리가 너무 시끄럽습니다.",
+        "전기요금이 너무 많이 나왔습니다.",
+        "차를 사고 싶습니다.",
+    ],
+)
+def test_common_words_do_not_create_false_positive_categories(description: str) -> None:
+    result = analyze_report(description=description, address="서울특별시 중구")
+
+    assert result.categories == [Category.OTHER_CIVIC]
+    assert result.track is ReportTrack.CIVIC
+    assert result.suggested_agencies == [AgencyType.LOCAL_GOV]
+
+
+@pytest.mark.parametrize(
     "description",
     [
         "공원에서 동물을 목격했습니다.",

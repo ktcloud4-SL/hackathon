@@ -28,6 +28,10 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "차량 충돌",
             "자동차 충돌",
             "차가 충돌",
+            "차가 부딪",
+            "차량이 부딪",
+            "차량끼리 충돌",
+            "오토바이와 차가 부딪",
             "추돌",
             "차량 전복",
             "자동차 전복",
@@ -53,6 +57,7 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "의식 없음",
             "의식을 잃",
             "의식 불명",
+            "숨을 잘 못 쉬",
             "구조 요청",
             "구조가 필요",
             "구조 필요",
@@ -71,10 +76,14 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "감전",
             "변압기",
             "전기 시설",
+            "전기시설",
             "전기 설비",
             "전기 사고",
             "전기 위험",
             "전기가 끊",
+            "전기가 튀",
+            "스파크가 나",
+            "합선",
         ),
     ),
     CategoryRule(
@@ -82,7 +91,7 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
         "화재 위험",
         (
             "화재",
-            "불꽃",
+            "불꽃이",
             "불길이",
             "불이 나",
             "불이 났",
@@ -93,8 +102,11 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "연기가 나",
             "연기가 보",
             "연기가 자욱",
+            "연기가 많이",
             "연기 발생",
             "연기 냄새",
+            "타는 냄새",
+            "화염",
             "폭발",
         ),
     ),
@@ -105,8 +117,13 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "포트홀",
             "싱크홀",
             "도로 파손",
+            "도로가 파",
             "도로가 꺼",
             "도로 균열",
+            "도로가 갈라",
+            "도로에 구멍",
+            "아스팔트가 꺼",
+            "보도블록이 깨",
             "낙하물",
             "교량 파손",
         ),
@@ -121,7 +138,9 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "가스가 새",
             "가스 새",
             "가스 배관",
+            "가스 배관이 깨",
             "가스관 파손",
+            "가스 누출이",
             "lpg 누출",
         ),
     ),
@@ -133,6 +152,8 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
             "동물사체",
             "로드킬",
             "죽은 동물",
+            "죽은 고양이",
+            "죽은 개",
         ),
     ),
 )
@@ -190,8 +211,9 @@ def analyze_report(*, description: str, address: str) -> ReportAnalysisResponse:
         categories.append(rule.category)
         labels.append(rule.label)
         matched_keyword_count += len(matched)
+        reason_keywords = ["불꽃" if keyword == "불꽃이" else keyword for keyword in matched[:3]]
         reasons.append(
-            f"{', '.join(matched[:3])} 표현에서 {rule.label} 가능성을 감지했습니다."
+            f"{', '.join(reason_keywords)} 표현에서 {rule.label} 가능성을 감지했습니다."
         )
 
     if not categories:
