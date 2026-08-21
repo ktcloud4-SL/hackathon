@@ -1,7 +1,7 @@
 import pytest
 
 from app.schemas.auth import AgencyType
-from app.schemas.domain import Category, Severity
+from app.schemas.domain import Category, ReportTrack, Severity
 from app.services.classification import analyze_report
 from app.services.routing import route_categories
 
@@ -22,6 +22,40 @@ def test_ambiguous_words_do_not_trigger_incident_categories(description: str) ->
     assert result.categories == []
     assert result.suggested_agencies == []
     assert result.needs_user_confirmation is True
+    assert result.track is None
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "도로에 동물 사체가 있어 통행에 불편하고 위험합니다.",
+        "도로 위 로드킬을 신고합니다.",
+        "길가에 죽은 동물이 있습니다.",
+    ],
+)
+def test_analyzes_animal_carcass_as_civic_report(description: str) -> None:
+    result = analyze_report(description=description, address="서울특별시 중구")
+
+    assert result.categories == [Category.ANIMAL_CARCASS]
+    assert result.track is ReportTrack.CIVIC
+    assert result.severity is Severity.LOW
+    assert result.suggested_agencies == [AgencyType.LOCAL_GOV]
+    assert result.needs_user_confirmation is False
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "공원에서 동물을 목격했습니다.",
+        "보고서에 사체라는 표현이 있습니다.",
+    ],
+)
+def test_single_animal_or_carcass_words_do_not_trigger_animal_carcass(
+    description: str,
+) -> None:
+    result = analyze_report(description=description, address="서울특별시 중구")
+
+    assert Category.ANIMAL_CARCASS not in result.categories
 
 
 def test_analyzes_compound_traffic_injury_electric_and_fire_report() -> None:
@@ -37,6 +71,7 @@ def test_analyzes_compound_traffic_injury_electric_and_fire_report() -> None:
         Category.FIRE_RISK,
     ]
     assert result.severity is Severity.HIGH
+    assert result.track is ReportTrack.EMERGENCY
     assert result.suggested_agencies == [
         AgencyType.POLICE,
         AgencyType.ROAD,
@@ -54,6 +89,7 @@ def test_analyzes_road_damage() -> None:
 
     assert result.categories == [Category.ROAD_DAMAGE]
     assert result.severity is Severity.LOW
+    assert result.track is ReportTrack.CIVIC
     assert result.suggested_agencies == [AgencyType.ROAD]
 
 
@@ -90,6 +126,7 @@ def test_unclassified_report_requires_manual_confirmation() -> None:
     assert result.confidence == 0.0
     assert result.reasons == []
     assert result.needs_user_confirmation is True
+    assert result.track is None
     assert result.analysis_method == "RULE"
 
 
@@ -102,3 +139,14 @@ def test_category_and_agency_results_are_deduplicated() -> None:
     assert result.categories == [Category.TRAFFIC_ACCIDENT, Category.ROAD_DAMAGE]
     assert len(result.categories) == len(set(result.categories))
     assert result.suggested_agencies == route_categories(result.categories)
+
+
+def test_emergency_category_takes_priority_over_animal_carcass() -> None:
+    result = analyze_report(
+        description="도로에 동물 사체가 있고 사람이 다쳤습니다.",
+        address="서울특별시 중구",
+    )
+
+    assert result.categories == [Category.HUMAN_INJURY, Category.ANIMAL_CARCASS]
+    assert result.track is ReportTrack.EMERGENCY
+    assert result.suggested_agencies == [AgencyType.FIRE, AgencyType.LOCAL_GOV]

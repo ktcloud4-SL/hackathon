@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.object_storage = S3ObjectStorage(
             bucket_name=settings.s3_bucket,
             aws_region=settings.aws_region,
+            endpoint_url=settings.s3_endpoint_url,
             object_prefix=settings.s3_prefix,
             presigned_url_expire_seconds=settings.s3_presigned_url_expire_seconds,
         )

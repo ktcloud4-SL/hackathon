@@ -691,6 +691,12 @@
   align-items: center;
 }
 
+.incident-item-classification {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .incident-item-topline {
   justify-content: space-between;
   gap: 10px;
@@ -1098,6 +1104,7 @@
 .agency-kepco { color: #4b68a7; background: #ebeff9; }
 .agency-road { color: #91752b; background: #f9f1db; }
 .agency-gas { color: #4d7e62; background: #e7f2ec; }
+.agency-local_gov { color: #5557a6; background: #eeeefe; }
 
 .agency-status-card strong,
 .agency-current {

@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 
 from app.schemas import ApiModel
 from app.schemas.auth import AgencyType
-from app.schemas.domain import Category, Severity
+from app.schemas.domain import Category, ReportTrack, Severity
 
 
 class ReportAnalysisRequest(ApiModel):
@@ -24,6 +24,7 @@ class ReportAnalysisRequest(ApiModel):
 
 class ReportAnalysisResponse(ApiModel):
     categories: list[Category]
+    track: ReportTrack | None
     severity: Severity
     suggested_agencies: list[AgencyType]
     summary: str

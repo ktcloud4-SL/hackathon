@@ -35,7 +35,7 @@ export default function App() {
     return <AdminDashboardPage />;
   }
 
-  if (/^\/agency\/(police|fire|kepco|road|gas)\/?$/.test(pathname)) {
+  if (/^\/agency\/(police|fire|kepco|road|gas|local-gov)\/?$/.test(pathname)) {
     return <AgencyDashboardPage />;
   }
 

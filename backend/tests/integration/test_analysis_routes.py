@@ -26,6 +26,7 @@ def test_analyze_report_response_schema(monkeypatch: pytest.MonkeyPatch) -> None
             "ELECTRIC_DAMAGE",
             "FIRE_RISK",
         ],
+        "track": "EMERGENCY",
         "severity": "HIGH",
         "suggestedAgencies": ["POLICE", "ROAD", "FIRE", "KEPCO"],
         "summary": "교통사고, 인명 피해, 전기 설비 파손, 화재 위험 요소가 함께 감지된 복합 상황입니다.",

@@ -15,6 +15,7 @@ DEMO_USERS = [
     {"email": "kepco@onereport.com", "name": "한국전력 상황실", "password": "Password123!", "role": "AGENCY", "agency_code": "KEPCO"},
     {"email": "road@onereport.com", "name": "도로관리청 상황실", "password": "Password123!", "role": "AGENCY", "agency_code": "ROAD"},
     {"email": "gas@onereport.com", "name": "가스안전공사 상황실", "password": "Password123!", "role": "AGENCY", "agency_code": "GAS"},
+    {"email": "localgov@onereport.com", "name": "관할 지자체 담당부서", "password": "Password123!", "role": "AGENCY", "agency_code": "LOCAL_GOV"},
     # Admin
     {"email": "admin@onereport.com", "name": "통합재난관제실", "password": "Password123!", "role": "ADMIN", "agency_code": None},
 ]

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ANALYSIS_STAGE_INTERVAL_MS,
   MIN_ANALYSIS_DISPLAY_MS,
+  deriveTrackPreview,
   getAnalysisHighlights,
   getAnalysisModalCopy,
   getAnalysisStageLabels,
@@ -133,6 +134,7 @@ test("analysis modal copy clearly distinguishes reports with photos", () => {
 test("only classified results are used as recommendations", () => {
   const classified = {
     categories: ["GAS_RISK"],
+    track: "EMERGENCY",
     severity: "MEDIUM",
     suggestedAgencies: ["GAS"],
     summary: "가스 위험 관련 상황으로 분석했습니다.",
@@ -155,9 +157,21 @@ test("only classified results are used as recommendations", () => {
 });
 
 
+test("track preview follows the categories the user finally confirms", () => {
+  assert.equal(deriveTrackPreview([]), null);
+  assert.equal(deriveTrackPreview(["ANIMAL_CARCASS"]), "CIVIC");
+  assert.equal(deriveTrackPreview(["ROAD_DAMAGE"]), "CIVIC");
+  assert.equal(
+    deriveTrackPreview(["ANIMAL_CARCASS", "HUMAN_INJURY"]),
+    "EMERGENCY",
+  );
+});
+
+
 test("analysis highlights keep agencies and up to three reasons", () => {
   const analysis = {
     categories: ["TRAFFIC_ACCIDENT", "HUMAN_INJURY", "ELECTRIC_DAMAGE", "FIRE_RISK"],
+    track: "EMERGENCY",
     severity: "HIGH",
     suggestedAgencies: ["POLICE", "ROAD", "FIRE", "KEPCO"],
     summary: "교통사고, 인명 피해, 전기 설비 파손, 화재 위험 요소가 함께 감지된 복합 상황입니다.",
@@ -172,6 +186,7 @@ test("analysis highlights keep agencies and up to three reasons", () => {
     severity: "HIGH",
     suggestedAgencies: ["POLICE", "ROAD", "FIRE", "KEPCO"],
     reasons: ["교통사고 근거", "인명 피해 근거", "전력 위험 근거"],
+    track: "EMERGENCY",
   });
 });
 
@@ -179,6 +194,7 @@ test("analysis highlights keep agencies and up to three reasons", () => {
 test("single-category highlights keep one reason and fallback has no details", () => {
   const single = {
     categories: ["GAS_RISK"],
+    track: "EMERGENCY",
     severity: "MEDIUM",
     suggestedAgencies: ["GAS"],
     summary: "가스 위험 관련 상황으로 분석했습니다.",

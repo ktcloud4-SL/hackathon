@@ -349,7 +349,7 @@
 
 .guide-agency-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 10px;
   margin-top: 28px;
 }
@@ -371,6 +371,7 @@
 .guide-agency-grid .agency-kepco .guide-agency-symbol { background: #e28c2a; }
 .guide-agency-grid .agency-road .guide-agency-symbol { background: #438067; }
 .guide-agency-grid .agency-gas .guide-agency-symbol { background: #7967a5; }
+.guide-agency-grid .agency-local-gov .guide-agency-symbol { background: #5557a6; }
 .guide-agency-grid strong { display: block; color: #334039; font-size: 11px; }
 .guide-agency-grid small { display: block; margin-top: 2px; color: #8a948e; font-size: 7px; }
 
@@ -461,3 +462,4 @@
   .guide-cta { align-items: flex-start; flex-wrap: wrap; }
   .guide-cta a { width: 100%; }
 }
+.guide-agency-grid .agency-local-gov { color: #5557a6; background: #f4f3ff; }

@@ -17,6 +17,12 @@ class Category(str, Enum):
     FIRE_RISK = "FIRE_RISK"
     ROAD_DAMAGE = "ROAD_DAMAGE"
     GAS_RISK = "GAS_RISK"
+    ANIMAL_CARCASS = "ANIMAL_CARCASS"
+
+
+class ReportTrack(str, Enum):
+    EMERGENCY = "EMERGENCY"
+    CIVIC = "CIVIC"
 
 
 class Severity(str, Enum):
@@ -57,6 +63,7 @@ class IncidentSummary(ApiModel):
     status: IncidentStatus
     severity: Severity
     categories: list[Category]
+    track: ReportTrack
     created_at: datetime
     updated_at: datetime
 
@@ -102,6 +109,7 @@ class AgencyIncidentItem(ApiModel):
     agency_status: AgencyStatus
     severity: Severity
     categories: list[Category]
+    track: ReportTrack
     description: str
     address: str
     assigned_at: datetime

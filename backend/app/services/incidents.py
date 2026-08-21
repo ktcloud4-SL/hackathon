@@ -20,6 +20,7 @@ from app.schemas.domain import (
     IncidentSummary,
     MyReportItem,
     ReportCreatedResponse,
+    ReportTrack,
     ReportView,
     Severity,
     SupportResponse,
@@ -30,7 +31,7 @@ from app.services.event_publisher import (
     IncidentEventPublication,
     IncidentEventPublisher,
 )
-from app.services.routing import route_categories
+from app.services.routing import derive_report_track, route_categories
 from app.services.timeline import add_timeline_event, timeline_view
 
 
@@ -70,12 +71,21 @@ def report_view(
     )
 
 
+def _required_track(categories: list[Category]) -> ReportTrack:
+    track = derive_report_track(categories)
+    if track is None:
+        raise ValueError("Incident categories에서 ReportTrack을 계산할 수 없습니다.")
+    return track
+
+
 def incident_summary(incident: Incident) -> IncidentSummary:
+    categories = [Category(value) for value in incident.categories]
     return IncidentSummary(
         id=incident.id,
         status=IncidentStatus(incident.status),
         severity=Severity(incident.severity),
-        categories=[Category(value) for value in incident.categories],
+        categories=categories,
+        track=_required_track(categories),
         created_at=incident.created_at,
         updated_at=incident.updated_at,
     )
@@ -323,6 +333,9 @@ class IncidentService:
                 agency_status=AgencyStatus(item.status),
                 severity=Severity(item.incident.severity),
                 categories=[Category(value) for value in item.incident.categories],
+                track=_required_track(
+                    [Category(value) for value in item.incident.categories]
+                ),
                 description=item.incident.report.description,
                 address=item.incident.report.address,
                 assigned_at=item.assigned_at,

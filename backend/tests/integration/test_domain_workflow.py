@@ -13,7 +13,14 @@ from sqlalchemy.ext.asyncio import (
 from app.db.database import Base
 from app.models import Agency, TimelineEvent, User
 from app.schemas.auth import AgencyType, UserRole
-from app.schemas.domain import AgencyStatus, Category, IncidentStatus, Severity
+from app.schemas.domain import (
+    AgencyStatus,
+    Category,
+    IncidentStatus,
+    ReportTrack,
+    Severity,
+)
+from app.services.classification import analyze_report
 from app.services.auth import UserAuthRecord
 from app.services.event_publisher import (
     IncidentEventPublication,
@@ -106,8 +113,49 @@ async def _create_incident(
         AgencyType.ROAD,
         AgencyType.FIRE,
     ]
+    assert created.incident.track is ReportTrack.EMERGENCY
     assert publisher.events == []  # Initial state is returned, not SSE-published.
     return created.incident.id
+
+
+@pytest.mark.asyncio
+async def test_final_incident_track_is_recalculated_from_submitted_categories(
+    database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
+) -> None:
+    _, factory = database
+    analysis = analyze_report(
+        description="도로에 동물 사체가 있습니다.",
+        address="서울시 중구",
+    )
+    assert analysis.track is ReportTrack.CIVIC
+
+    async with factory() as session:
+        citizen_id = await session.scalar(
+            select(User.id).where(User.email == "citizen@example.com")
+        )
+    assert citizen_id is not None
+
+    async with factory() as session:
+        created = await IncidentService(session, RecordingPublisher()).create_report(
+            reporter_user_id=citizen_id,
+            description="동물 사체 옆에서 사람이 다쳤습니다.",
+            address="서울시 중구",
+            latitude=37.5,
+            longitude=127.0,
+            categories=[Category.ANIMAL_CARCASS, Category.HUMAN_INJURY],
+            severity=Severity.MEDIUM,
+            image_object_key=None,
+        )
+        detail = await IncidentService(session, RecordingPublisher()).get_detail(
+            created.incident.id
+        )
+
+    assert created.incident.track is ReportTrack.EMERGENCY
+    assert detail.track is ReportTrack.EMERGENCY
+    assert [item.agency_type for item in created.agencies] == [
+        AgencyType.LOCAL_GOV,
+        AgencyType.FIRE,
+    ]
 
 
 @pytest.mark.asyncio

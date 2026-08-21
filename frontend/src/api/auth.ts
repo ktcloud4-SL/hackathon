@@ -58,6 +58,7 @@ const agencySlug: Record<AgencyType, string> = {
   KEPCO: "kepco",
   ROAD: "road",
   GAS: "gas",
+  LOCAL_GOV: "local-gov",
 };
 
 export function getDefaultPathForUser(user: UserPublic): string {

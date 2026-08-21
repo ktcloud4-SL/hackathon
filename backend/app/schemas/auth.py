@@ -19,6 +19,7 @@ class AgencyType(str, Enum):
     KEPCO = "KEPCO"
     ROAD = "ROAD"
     GAS = "GAS"
+    LOCAL_GOV = "LOCAL_GOV"
 
 
 class RegisterRequest(ApiModel):

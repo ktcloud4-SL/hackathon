@@ -57,6 +57,11 @@ const categoryDetails: Record<
     description: "가스 누출 확인과 안전 점검이 필요한 상황",
     icon: Activity,
   },
+  ANIMAL_CARCASS: {
+    label: "동물 사체",
+    description: "도로 위 동물 사체의 안전한 수거가 필요한 상황",
+    icon: Building2,
+  },
 };
 
 const agencyDetails: Record<AgencyType, { label: string; short: string }> = {
@@ -65,6 +70,7 @@ const agencyDetails: Record<AgencyType, { label: string; short: string }> = {
   KEPCO: { label: "한국전력", short: "한전" },
   ROAD: { label: "도로관리", short: "도로" },
   GAS: { label: "가스안전", short: "가스" },
+  LOCAL_GOV: { label: "관할 지자체", short: "지자체" },
 };
 
 const severityDetails: Record<Severity, { label: string; copy: string }> = {
@@ -100,6 +106,7 @@ export function AnalysisResultPage() {
     );
   }
   const severity = severityDetails[result.incident.severity];
+  const isCivic = result.incident.track === "CIVIC";
 
   return (
     <div className="app-shell citizen-flow-shell">
@@ -118,13 +125,16 @@ export function AnalysisResultPage() {
             <Sparkles size={32} />
           </div>
           <div className="analysis-hero-copy">
+            <span className={`report-track-pill track-${result.incident.track.toLowerCase()}`}>
+              {isCivic ? "생활·공공신고" : "긴급·복합대응"}
+            </span>
             <span className="flow-eyebrow">
               <BadgeCheck size={16} /> 접수 완료
             </span>
             <h1>신고가 정상적으로 접수되었어요.</h1>
             <p>
-              선택하신 {result.incident.categories.length}개의 사고 유형을 기준으로
-              필요한 기관 {result.agencies.length}곳을 배정했습니다.
+              확인하신 {result.incident.categories.length}개의 신고 유형을 기준으로
+              {isCivic ? " 담당기관 " : " 필요한 대응기관 "}{result.agencies.length}곳을 연결했습니다.
             </p>
           </div>
           <div className={`severity-summary severity-${result.incident.severity.toLowerCase()}`}>
@@ -172,7 +182,7 @@ export function AnalysisResultPage() {
             <div className="flow-card-heading">
               <div>
                 <span className="section-number">02</span>
-                <h2>공동대응 기관</h2>
+                <h2>{isCivic ? "연결된 담당기관" : "공동대응 기관"}</h2>
               </div>
               <span className="result-count">{result.agencies.length}곳</span>
             </div>
@@ -187,7 +197,7 @@ export function AnalysisResultPage() {
                     </span>
                     <div>
                       <strong>{agency.label}</strong>
-                      <small>공동대응 배정 완료</small>
+                      <small>{isCivic ? "담당기관 연결 완료" : "공동대응 배정 완료"}</small>
                     </div>
                     <span className="assignment-badge">배정</span>
                   </article>
@@ -198,7 +208,7 @@ export function AnalysisResultPage() {
             <div className="assignment-flow">
               <span><Check size={15} /> 유형 확인</span>
               <span className="flow-line" />
-              <span><Check size={15} /> 기관 배정</span>
+              <span><Check size={15} /> {isCivic ? "담당기관 연결" : "기관 배정"}</span>
               <span className="flow-line muted" />
               <span className="pending"><Clock3 size={15} /> 접수 대기</span>
             </div>
@@ -248,7 +258,7 @@ export function AnalysisResultPage() {
 
       <footer>
         <span>OneReport</span>
-        <p>한 번의 신고, 여러 기관의 공동대응</p>
+        <p>한 번의 신고, 필요한 기관으로 연결</p>
       </footer>
     </div>
   );

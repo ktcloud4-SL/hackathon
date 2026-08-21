@@ -42,6 +42,7 @@ function reportResult(incidentId = 42): CreateReportResponse {
       status: "OPEN",
       severity: "HIGH",
       categories: ["TRAFFIC_ACCIDENT", "ELECTRIC_DAMAGE"],
+      track: "EMERGENCY",
       createdAt: "2026-08-20T10:00:00+09:00",
       updatedAt: "2026-08-20T10:00:00+09:00",
     },

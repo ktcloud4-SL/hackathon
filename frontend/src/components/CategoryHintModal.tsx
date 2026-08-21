@@ -19,7 +19,7 @@ import type {
   ReportAnalysisResponse,
   Severity,
 } from "../types/report";
-import { getAnalysisHighlights } from "../utils/reportAnalysis";
+import { deriveTrackPreview, getAnalysisHighlights } from "../utils/reportAnalysis";
 import "./category-hint-modal.css";
 
 const severityLabels: Record<Severity, string> = {
@@ -35,6 +35,7 @@ const agencyLabels: Record<AgencyType, string> = {
   KEPCO: "한국전력",
   ROAD: "도로관리",
   GAS: "가스안전",
+  LOCAL_GOV: "관할 지자체",
 };
 
 const categoryOptions: Array<{
@@ -86,6 +87,13 @@ const categoryOptions: Array<{
     examples: "가스 누출, 배관 파손, 이상 냄새",
     icon: Activity,
   },
+  {
+    value: "ANIMAL_CARCASS",
+    label: "동물 사체",
+    copy: "도로 위 동물 사체나 로드킬 신고",
+    examples: "동물 사체, 로드킬, 죽은 동물",
+    icon: CircleAlert,
+  },
 ];
 
 interface CategoryHintModalProps {
@@ -106,6 +114,7 @@ export function CategoryHintModal({
   onClose,
 }: CategoryHintModalProps) {
   const highlights = getAnalysisHighlights(analysis);
+  const selectedTrack = deriveTrackPreview(selected) ?? highlights?.track ?? null;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -142,6 +151,16 @@ export function CategoryHintModal({
 
         {highlights ? (
           <section className="analysis-highlights" aria-label="AI 상황 분석 결과">
+            {selectedTrack && (
+              <div className={`analysis-track-banner track-${selectedTrack.toLowerCase()}`}>
+                <strong>{selectedTrack === "EMERGENCY" ? "긴급·복합대응" : "생활·공공신고"}</strong>
+                <span>
+                  {selectedTrack === "EMERGENCY"
+                    ? "여러 대응기관이 하나의 Incident에서 함께 대응합니다."
+                    : "신고 내용에 맞는 공공기관 또는 담당부서로 연결합니다."}
+                </span>
+              </div>
+            )}
             <div className="analysis-highlight-summary">
               <div>
                 <span>상황 분석 요약</span>

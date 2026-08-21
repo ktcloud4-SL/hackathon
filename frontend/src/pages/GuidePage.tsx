@@ -37,8 +37,8 @@ const responseSteps = [
   },
   {
     number: "03",
-    title: "필요 기관 연결·공동대응",
-    copy: "한 곳 또는 여러 기관을 하나의 Incident로 연결하고 대응 과정을 Timeline으로 공유합니다.",
+    title: "처리 경로·필요 기관 연결",
+    copy: "긴급·복합대응 또는 생활·공공신고 경로로 분류하고, 담당 기관의 처리 과정을 Timeline으로 공유합니다.",
     icon: Radio,
   },
 ];
@@ -49,6 +49,7 @@ const agencies = [
   { name: "한국전력", short: "한전", copy: "전기 설비 안전 조치", icon: Zap, className: "agency-kepco" },
   { name: "도로관리", short: "도로", copy: "도로 파손·시설 복구", icon: Route, className: "agency-road" },
   { name: "가스안전", short: "가스", copy: "가스 누출·안전 점검", icon: Flame, className: "agency-gas" },
+  { name: "관할 지자체", short: "지자체", copy: "생활·공공신고 처리", icon: Building2, className: "agency-local-gov" },
 ];
 
 const agencyStatuses = ["배정", "접수", "출동", "도착", "대응", "완료"];
@@ -63,7 +64,7 @@ export function GuidePage() {
           <div className="guide-hero-copy">
             <span className="guide-eyebrow"><BadgeCheck size={16} /> OneReport 이용안내</span>
             <h1><span className="guide-hero-question">어디에 신고할지 고민하지 마세요.</span><span>한 번의 신고를 필요한 기관에 연결합니다.</span></h1>
-            <p>현재 서비스에서는 신고 내용을 분석하고, 사용자가 확인한 사고 유형을 바탕으로 필요한 대표 기관을 연결합니다. 장기적으로는 공공기관·공기업·지자체·민원 채널까지 하나의 Incident로 잇는 통합 신고·공동대응 플랫폼을 지향합니다.</p>
+            <p>신고 내용을 분석해 긴급·복합대응과 생활·공공신고 중 알맞은 처리 경로를 정하고, 사용자가 확인한 유형을 바탕으로 필요한 기관을 연결합니다. OneReport는 모든 공공신고의 하나의 진입점을 지향합니다.</p>
             <div className="guide-hero-actions">
               <a href="/#report-form">지금 신고하기 <ArrowRight size={18} /></a>
               <a className="secondary" href="/reports/me">내 신고 확인</a>
@@ -120,6 +121,7 @@ export function GuidePage() {
               <span><Check size={17} /> 현재 제공 범위</span>
               <ul>
                 <li>복합 상황을 하나의 Incident로 관리</li>
+                <li>긴급·복합대응 / 생활·공공신고 분류</li>
                 <li>상황에 따른 필요 기관 배정</li>
                 <li>기관별 대응 상태·Timeline 공유</li>
                 <li>추가 기관 지원 요청 기록</li>
@@ -129,7 +131,7 @@ export function GuidePage() {
               <span><Sparkles size={17} /> 향후 연동 범위</span>
               <ul>
                 <li>실제 112·119 신고 시스템</li>
-                <li>지자체·공공기관 민원 시스템</li>
+                <li>지자체의 실제 행정·민원 시스템</li>
                 <li>공기업·생활 인프라 시스템</li>
                 <li>출동 ETA·공공 안전 데이터·IoT</li>
               </ul>
@@ -140,7 +142,7 @@ export function GuidePage() {
         <section className="guide-section guide-agencies" aria-labelledby="guide-agencies-title">
           <div className="guide-section-heading inline">
             <div><span>JOINT RESPONSE</span><h2 id="guide-agencies-title">상황에 맞는 기관으로 자동 연결해요.</h2></div>
-            <p>아래는 현재 연결 대상으로 안내하는 대표 기관이며, 상황에 필요한 기관만 배정됩니다.</p>
+            <p>아래는 V2에서 확인할 수 있는 대표 기관이며, 분석된 신고에 필요한 기관만 배정됩니다.</p>
           </div>
           <div className="guide-agency-grid">
             {agencies.map((agency) => {
@@ -154,7 +156,7 @@ export function GuidePage() {
               );
             })}
           </div>
-          <p className="guide-agency-expansion"><strong>확장 방향</strong> 지자체 · 상하수도 · 환경 · 생활민원 등 다양한 공공 서비스 채널</p>
+          <p className="guide-agency-expansion"><strong>확장 방향</strong> 상하수도 · 환경 · 복지 · 일반 생활민원 등 더 다양한 공공 서비스 채널</p>
         </section>
 
         <section className="guide-status-section">
@@ -202,7 +204,7 @@ export function GuidePage() {
         </section>
       </main>
 
-      <footer><span>OneReport</span><p>한 번의 신고, 여러 기관의 공동대응</p></footer>
+      <footer><span>OneReport</span><p>모든 공공신고를 위한 하나의 진입점</p></footer>
     </div>
   );
 }
