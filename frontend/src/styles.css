@@ -89,6 +89,7 @@ a {
 
 .report-track-pill {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   width: max-content;
   min-height: 24px;

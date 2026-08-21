@@ -58,7 +58,7 @@ export function NotFoundPage() {
         </section>
       </main>
 
-      <footer><span>OneReport</span><p>한 번의 신고, 여러 기관의 공동대응</p></footer>
+      <footer><span>OneReport</span><p>한 번의 신고, 필요한 기관으로 연결</p></footer>
     </div>
   );
 }

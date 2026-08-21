@@ -45,12 +45,16 @@ import { IncidentPhoto } from "../components/IncidentPhoto";
 import { applyIncidentStreamEvent } from "../state/incidentEvents";
 import type { AdminIncident } from "../types/admin";
 import type {
-  AgencyStatus,
   AgencyType,
   Category,
   IncidentStatus,
   Severity,
 } from "../types/report";
+import {
+  formatTimelineMessage,
+  getAgencyStatusLabel,
+  getIncidentStatusDetail,
+} from "../utils/incidentPresentation";
 import "./admin-dashboard.css";
 
 const severityLabel: Record<Severity, string> = {
@@ -60,13 +64,6 @@ const severityLabel: Record<Severity, string> = {
   CRITICAL: "긴급",
 };
 
-const incidentStatusLabel: Record<IncidentStatus, string> = {
-  OPEN: "접수",
-  RESPONDING: "대응 중",
-  RESOLVED: "해결됨",
-  CLOSED: "종료",
-};
-
 const agencyLabel: Record<AgencyType, string> = {
   POLICE: "경찰",
   FIRE: "소방·구급 · 119",
@@ -74,15 +71,6 @@ const agencyLabel: Record<AgencyType, string> = {
   ROAD: "도로관리",
   GAS: "가스안전",
   LOCAL_GOV: "관할 지자체",
-};
-
-const agencyStatusLabel: Record<AgencyStatus, string> = {
-  ASSIGNED: "배정됨",
-  RECEIVED: "접수",
-  DISPATCHED: "출동",
-  ARRIVED: "현장도착",
-  IN_PROGRESS: "조치중",
-  COMPLETED: "완료",
 };
 
 const categoryLabel: Record<Category, string> = {
@@ -417,7 +405,7 @@ export function AdminDashboardPage() {
             <div>
               <div className="admin-eyebrow"><ShieldCheck size={15} /> OneReport Command Center</div>
               <h2>전체 사고 대응 현황</h2>
-              <p>기관별 대응 상태를 확인하고 필요한 조치를 빠르게 이어가세요.</p>
+              <p>기관별 처리·대응 상태를 확인하고 필요한 조치를 빠르게 이어가세요.</p>
             </div>
             <button className="refresh-button" type="button" onClick={() => void refreshIncidents()} disabled={isLoading}>
               <RefreshCw size={16} />
@@ -511,7 +499,7 @@ export function AdminDashboardPage() {
                         <span className="incident-item-topline">
                           <strong>Incident #{String(incident.id).padStart(3, "0")}</strong>
                           <span className={`incident-status status-${incident.status.toLowerCase()}`}>
-                            <i />{incidentStatusLabel[incident.status]}
+                            <i />{getIncidentStatusDetail(incident.track, incident.status).label}
                           </span>
                         </span>
                         <span className="incident-description">{incident.report.description}</span>
@@ -562,7 +550,7 @@ export function AdminDashboardPage() {
                         <AlertTriangle size={13} />{severityLabel[selectedIncident.severity]}
                       </span>
                       <span className={`status-badge status-${selectedIncident.status.toLowerCase()}`}>
-                        {incidentStatusLabel[selectedIncident.status]}
+                        {getIncidentStatusDetail(selectedIncident.track, selectedIncident.status).label}
                       </span>
                     </div>
                   </div>
@@ -635,7 +623,7 @@ export function AdminDashboardPage() {
                       <div>
                         <strong>{agencyLabel[agency.agencyType]}</strong>
                         <span className={`agency-current status-${agency.status.toLowerCase()}`}>
-                          <i />{agencyStatusLabel[agency.status]}
+                          <i />{getAgencyStatusLabel(selectedIncident.track, agency.status)}
                         </span>
                       </div>
                       <ChevronRight size={16} />
@@ -657,7 +645,7 @@ export function AdminDashboardPage() {
                         {index < events.length - 1 && <i />}
                       </div>
                       <div className="timeline-copy">
-                        <div><strong>{event.message}</strong><time>{formatTime(event.occurredAt)}</time></div>
+                        <div><strong>{formatTimelineMessage(event, selectedIncident.track)}</strong><time>{formatTime(event.occurredAt)}</time></div>
                         <small>{formatDate(event.occurredAt)}</small>
                       </div>
                     </div>
@@ -673,10 +661,10 @@ export function AdminDashboardPage() {
         <div className="admin-modal-backdrop" role="presentation" onMouseDown={() => setIsAgencyModalOpen(false)}>
           <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="agency-modal-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="admin-modal-heading">
-              <div><span><Building2 size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2 id="agency-modal-title">대응기관 추가</h2></div></div>
+              <div><span><Building2 size={20} /></span><div><small>INCIDENT #{selectedIncident.id}</small><h2 id="agency-modal-title">{selectedIncident.track === "CIVIC" ? "처리기관 추가" : "대응기관 추가"}</h2></div></div>
               <button type="button" onClick={() => setIsAgencyModalOpen(false)} aria-label="기관 추가 창 닫기"><X size={19} /></button>
             </div>
-            <p>현장 대응에 추가로 필요한 기관을 선택하세요. 선택 즉시 <strong>배정됨</strong> 상태로 참여합니다.</p>
+            <p>{selectedIncident.track === "CIVIC" ? "신고 처리에 추가로 필요한 기관을 선택하세요." : "현장 대응에 추가로 필요한 기관을 선택하세요."} 선택 즉시 <strong>배정됨</strong> 상태로 참여합니다.</p>
             <div className="agency-options">
               {availableAgencies.map((agencyType) => (
                 <button key={agencyType} type="button" onClick={() => void handleAddAgency(agencyType)} disabled={isActionPending}>

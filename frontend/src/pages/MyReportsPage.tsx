@@ -22,16 +22,10 @@ import { ApiError } from "../api/http";
 import { getMyReports } from "../api/reports";
 import { CitizenHeader } from "../components/CitizenHeader";
 import type { Category, IncidentStatus, MyReportItem, Severity } from "../types/report";
+import { getIncidentStatusDetail } from "../utils/incidentPresentation";
 import "./my-reports.css";
 
 type ReportFilter = "ALL" | "ACTIVE" | "COMPLETED";
-
-const statusDetails: Record<IncidentStatus, { label: string; copy: string }> = {
-  OPEN: { label: "기관 접수 대기", copy: "기관에 신고가 배정되었습니다." },
-  RESPONDING: { label: "공동대응 중", copy: "참여 기관이 현장 대응 중입니다." },
-  RESOLVED: { label: "대응 완료", copy: "모든 기관의 대응이 완료되었습니다." },
-  CLOSED: { label: "상황 종료", copy: "Incident가 최종 종료되었습니다." },
-};
 
 const severityLabels: Record<Severity, string> = {
   LOW: "낮음",
@@ -190,8 +184,8 @@ export function MyReportsPage() {
         ) : (
           <section className="my-report-list" aria-label="신고 목록">
             {filteredReports.map((report) => {
-              const status = statusDetails[report.incident.status];
               const isCivic = report.incident.track === "CIVIC";
+              const status = getIncidentStatusDetail(report.incident.track, report.incident.status);
               return (
                 <a
                   key={report.id}
@@ -204,8 +198,8 @@ export function MyReportsPage() {
                       <span className={`report-status-icon status-${report.incident.status.toLowerCase()}`}><StatusIcon status={report.incident.status} /></span>
                       <div>
                         <span>Incident #{report.incident.id}</span>
-                        <strong>{isCivic && report.incident.status === "RESPONDING" ? "공공신고 처리 중" : status.label}</strong>
-                        <small>{isCivic ? "담당기관이 신고를 확인하고 처리하고 있습니다." : status.copy}</small>
+                        <strong>{status.label}</strong>
+                        <small>{status.copy}</small>
                       </div>
                       <span className="report-card-badges">
                         <span className={`report-track-pill track-${report.incident.track.toLowerCase()}`}>{isCivic ? "생활·공공신고" : "긴급·복합대응"}</span>

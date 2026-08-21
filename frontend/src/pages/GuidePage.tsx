@@ -123,7 +123,7 @@ export function GuidePage() {
                 <li>복합 상황을 하나의 Incident로 관리</li>
                 <li>긴급·복합대응 / 생활·공공신고 분류</li>
                 <li>상황에 따른 필요 기관 배정</li>
-                <li>기관별 대응 상태·Timeline 공유</li>
+                <li>기관별 처리·대응 상태·Timeline 공유</li>
                 <li>추가 기관 지원 요청 기록</li>
               </ul>
             </article>
@@ -188,7 +188,7 @@ export function GuidePage() {
             </details>
             <details>
               <summary>신고 후 진행 상황은 어디서 보나요?<ChevronDown size={17} /></summary>
-              <p>로그인 후 ‘내 신고’에서 신고를 선택하면 기관별 접수·출동·도착·대응 상태와 전체 Timeline을 확인할 수 있습니다.</p>
+              <p>로그인 후 ‘내 신고’에서 신고를 선택하면 신고 Track에 맞는 기관별 처리·대응 상태와 전체 Timeline을 확인할 수 있습니다.</p>
             </details>
             <details>
               <summary>추가 기관이 필요하면 다시 신고해야 하나요?<ChevronDown size={17} /></summary>
