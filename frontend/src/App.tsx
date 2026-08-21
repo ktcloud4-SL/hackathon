@@ -1,5 +1,6 @@
 import { ReportPage } from "./pages/ReportPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { AdminMonitoringPage } from "./pages/AdminMonitoringPage";
 import { AgencyDashboardPage } from "./pages/AgencyDashboardPage";
 import { AnalysisResultPage } from "./pages/AnalysisResultPage";
 import { CitizenIncidentPage } from "./pages/CitizenIncidentPage";
@@ -29,6 +30,10 @@ export default function App() {
 
   if (/^\/incidents\/\d+\/?$/.test(pathname)) {
     return <CitizenIncidentPage />;
+  }
+
+  if (/^\/admin\/monitoring\/?$/.test(pathname)) {
+    return <AdminMonitoringPage />;
   }
 
   if (/^\/admin\/?$/.test(pathname)) {

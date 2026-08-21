@@ -1,6 +1,7 @@
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
   Bell,
   Building2,
   Check,
@@ -352,6 +353,10 @@ export function AdminDashboardPage() {
           <a href="#agencies">
             <Building2 size={19} />
             대응기관 현황
+          </a>
+          <a href="/admin/monitoring">
+            <BarChart3 size={19} />
+            모니터링
           </a>
         </nav>
 
