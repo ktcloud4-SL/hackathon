@@ -92,8 +92,6 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
         (
             "화재",
             "불꽃이",
-            "불꽃이 튀",
-            "불꽃이 나",
             "불길이",
             "불이 나",
             "불이 났",
@@ -213,8 +211,9 @@ def analyze_report(*, description: str, address: str) -> ReportAnalysisResponse:
         categories.append(rule.category)
         labels.append(rule.label)
         matched_keyword_count += len(matched)
+        reason_keywords = ["불꽃" if keyword == "불꽃이" else keyword for keyword in matched[:3]]
         reasons.append(
-            f"{', '.join(matched[:3])} 표현에서 {rule.label} 가능성을 감지했습니다."
+            f"{', '.join(reason_keywords)} 표현에서 {rule.label} 가능성을 감지했습니다."
         )
 
     if not categories:
