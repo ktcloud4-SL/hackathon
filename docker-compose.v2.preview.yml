@@ -1,0 +1,101 @@
+name: onereport-v2-preview
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${V2_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${V2_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${V2_POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${V2_POSTGRES_USER} -d ${V2_POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks:
+      - preview
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${V2_MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${V2_MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - preview
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      - minio
+    environment:
+      V2_MINIO_ACCESS_KEY: ${V2_MINIO_ACCESS_KEY}
+      V2_MINIO_SECRET_KEY: ${V2_MINIO_SECRET_KEY}
+      V2_MINIO_BUCKET: ${V2_MINIO_BUCKET}
+    entrypoint: >-
+      /bin/sh -c "until mc alias set preview http://minio:9000 $$V2_MINIO_ACCESS_KEY $$V2_MINIO_SECRET_KEY; do sleep 1; done &&
+      mc mb --ignore-existing preview/$$V2_MINIO_BUCKET"
+    networks:
+      - preview
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://${V2_POSTGRES_USER}:${V2_POSTGRES_PASSWORD}@postgres:5432/${V2_POSTGRES_DB}
+      JWT_SECRET: ${V2_JWT_SECRET}
+      AUTH_COOKIE_NAME: onereport_v2_preview_access_token
+      AUTH_COOKIE_SECURE: "false"
+      CORS_ORIGINS: '["http://${V2_PREVIEW_HOST}:18080"]'
+      AWS_REGION: ap-northeast-2
+      AWS_ACCESS_KEY_ID: ${V2_MINIO_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${V2_MINIO_SECRET_KEY}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET: ${V2_MINIO_BUCKET}
+      S3_PREFIX: reports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    networks:
+      - preview
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.v2-preview
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "18080:3000"
+    networks:
+      - preview
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  preview:
+    driver: bridge
