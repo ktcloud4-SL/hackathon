@@ -1,5 +1,6 @@
 """Deterministic keyword-based report analysis."""
 
+import re
 from dataclasses import dataclass
 
 from app.schemas.analysis import ReportAnalysisResponse
@@ -136,6 +137,15 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
     ),
 )
 
+MIN_FALLBACK_CONTENT_CHARS = 8
+
+
+def _has_meaningful_fallback_content(description: str) -> bool:
+    """Reject only obviously insufficient text without guessing a civic subtype."""
+
+    meaningful_characters = re.findall(r"[0-9a-zA-Z가-힣]", description)
+    return len(meaningful_characters) >= MIN_FALLBACK_CONTENT_CHARS
+
 
 def _recommend_severity(categories: list[Category]) -> Severity:
     if not categories:
@@ -185,12 +195,25 @@ def analyze_report(*, description: str, address: str) -> ReportAnalysisResponse:
         )
 
     if not categories:
+        if _has_meaningful_fallback_content(description):
+            categories = [Category.OTHER_CIVIC]
+            return ReportAnalysisResponse(
+                categories=categories,
+                track=derive_report_track(categories),
+                severity=Severity.LOW,
+                suggested_agencies=route_categories(categories),
+                summary="구체 유형에 정확히 일치하지 않는 생활·공공신고로 분석했습니다.",
+                confidence=0.35,
+                reasons=["관할 기관에서 신고 내용을 확인한 뒤 담당부서로 연결합니다."],
+                needs_user_confirmation=True,
+            )
+
         return ReportAnalysisResponse(
             categories=[],
             track=None,
             severity=Severity.MEDIUM,
             suggested_agencies=[],
-            summary="자동으로 사고 유형을 분류하지 못했습니다. 사고 유형을 직접 확인해 주세요.",
+            summary="신고 내용을 조금 더 구체적으로 작성해 주세요.",
             confidence=0.0,
             reasons=[],
             needs_user_confirmation=True,

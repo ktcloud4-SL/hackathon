@@ -18,6 +18,7 @@ class Category(str, Enum):
     ROAD_DAMAGE = "ROAD_DAMAGE"
     GAS_RISK = "GAS_RISK"
     ANIMAL_CARCASS = "ANIMAL_CARCASS"
+    OTHER_CIVIC = "OTHER_CIVIC"
 
 
 class ReportTrack(str, Enum):

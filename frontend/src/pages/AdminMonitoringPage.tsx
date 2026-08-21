@@ -326,7 +326,7 @@ export function AdminMonitoringPage() {
             <div>
               <div className="admin-eyebrow"><ShieldCheck size={15} /> Operations Analytics</div>
               <h2>사건 접수 모니터링</h2>
-              <p>지역·시간대·사건 유형별 접수 흐름을 한눈에 확인하세요.</p>
+              <p>긴급·복합대응과 생활·공공신고의 지역·시간대·유형별 접수 흐름을 한눈에 확인하세요.</p>
             </div>
             <div className="monitoring-period"><CalendarDays size={16} />오늘 00:00–현재</div>
           </section>

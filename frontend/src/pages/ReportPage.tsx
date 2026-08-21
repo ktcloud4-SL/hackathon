@@ -195,7 +195,7 @@ export function ReportPage() {
       setRecommendedSeverity(analysis.severity);
       setHasRecommendation(hasUsableRecommendation(analysis));
       setAnalysisResult(analysis);
-      if (!hasCategories || analysis.needsUserConfirmation) {
+      if (!hasCategories) {
         setNotice("자동으로 사고 유형을 분류하지 못했습니다. 유형을 직접 선택해 주세요.");
       }
     } catch {

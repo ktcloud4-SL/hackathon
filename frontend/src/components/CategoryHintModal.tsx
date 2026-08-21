@@ -19,7 +19,11 @@ import type {
   ReportAnalysisResponse,
   Severity,
 } from "../types/report";
-import { deriveTrackPreview, getAnalysisHighlights } from "../utils/reportAnalysis";
+import {
+  deriveTrackPreview,
+  getAnalysisHighlights,
+  getRecommendationGuide,
+} from "../utils/reportAnalysis";
 import "./category-hint-modal.css";
 
 const severityLabels: Record<Severity, string> = {
@@ -94,6 +98,13 @@ const categoryOptions: Array<{
     examples: "동물 사체, 로드킬, 죽은 동물",
     icon: CircleAlert,
   },
+  {
+    value: "OTHER_CIVIC",
+    label: "기타 생활·공공신고",
+    copy: "현재 유형에 없지만 공공기관 처리가 필요한 신고",
+    examples: "공공시설, 생활환경, 일반 공공신고",
+    icon: Building2,
+  },
 ];
 
 interface CategoryHintModalProps {
@@ -141,8 +152,8 @@ export function CategoryHintModal({
               <span>{hasRecommendation ? "AI 분석 결과" : "사고 유형 확인 필요"}</span>
               <h2 id="category-modal-title">
                 {hasRecommendation
-                  ? "추천 사고 유형을 확인해 주세요."
-                  : "해당하는 사고 유형을 모두 선택해 주세요."}
+                  ? "추천 신고 유형을 확인해 주세요."
+                  : "해당하는 신고 유형을 모두 선택해 주세요."}
               </h2>
             </div>
           </div>
@@ -173,7 +184,7 @@ export function CategoryHintModal({
 
             {highlights.suggestedAgencies.length > 0 && (
               <div className="analysis-highlight-row">
-                <strong><Building2 size={15} />예상 대응기관</strong>
+                <strong><Building2 size={15} />예상 담당기관</strong>
                 <div className="analysis-agency-list">
                   {highlights.suggestedAgencies.map((agency) => (
                     <span key={agency}>{agencyLabels[agency]}</span>
@@ -199,11 +210,11 @@ export function CategoryHintModal({
 
         {hasRecommendation && (
           <p className="category-modal-description category-recommendation-guide">
-            분석 결과를 확인하고 필요하면 사고 유형을 수정해 주세요.
+            {getRecommendationGuide(analysis)}
           </p>
         )}
 
-        <div className="category-option-grid" role="group" aria-label="사고 유형">
+        <div className="category-option-grid" role="group" aria-label="신고 유형">
           {categoryOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = selected.includes(option.value);

@@ -5,7 +5,8 @@ export type Category =
   | "FIRE_RISK"
   | "ROAD_DAMAGE"
   | "GAS_RISK"
-  | "ANIMAL_CARCASS";
+  | "ANIMAL_CARCASS"
+  | "OTHER_CIVIC";
 
 export type AgencyType = "POLICE" | "FIRE" | "KEPCO" | "ROAD" | "GAS" | "LOCAL_GOV";
 export type ReportTrack = "EMERGENCY" | "CIVIC";

@@ -592,9 +592,13 @@
 
 .filter-selects {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 8px;
+}
+
+.filter-selects > label:first-child {
+  grid-column: 1 / -1;
 }
 
 .filter-selects label,
@@ -773,6 +777,8 @@
 }
 
 .incident-item-bottom {
+  align-items: flex-start;
+  gap: 8px;
   justify-content: space-between;
   margin-top: 12px;
 }
@@ -782,46 +788,47 @@
   align-items: center;
   min-height: 20px;
   padding: 0 7px;
-  border-radius: 6px;
-  background: currentColor;
-  font-size: 0;
-}
-
-.severity-chip::after {
   color: white;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 800;
 }
 
-.severity-chip.severity-critical::after { content: "긴급"; }
-.severity-chip.severity-high::after { content: "높음"; }
-.severity-chip.severity-medium::after { content: "보통"; }
-.severity-chip.severity-low::after { content: "낮음"; }
+.severity-chip.severity-critical { background: #b9381d; }
+.severity-chip.severity-high { background: #a94708; }
+.severity-chip.severity-medium { background: #25639a; }
+.severity-chip.severity-low { background: #2f6f4f; }
+
+.severity-chip.severity-critical,
+.severity-chip.severity-high,
+.severity-chip.severity-medium,
+.severity-chip.severity-low {
+  color: #fff;
+}
 
 .agency-stack {
+  min-width: 0;
   display: flex;
-  padding-left: 5px;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
-.agency-stack i,
-.agency-stack em {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-left: -5px;
+.agency-stack > span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
   color: #526159;
-  border: 2px solid white;
-  border-radius: 50%;
+  border: 1px solid #d8e1db;
+  border-radius: 7px;
   background: #e5ebe7;
   font-size: 12px;
-  font-style: normal;
   font-weight: 700;
-}
-
-.agency-stack em {
-  color: white;
-  background: #6c7e74;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .incident-chevron {
@@ -899,10 +906,17 @@
   color: white;
 }
 
-.severity-badge.severity-critical { background: #dd4b23; }
-.severity-badge.severity-high { background: #e9882d; }
-.severity-badge.severity-medium { background: #397baa; }
-.severity-badge.severity-low { background: #5f8a72; }
+.severity-badge.severity-critical { background: #b9381d; }
+.severity-badge.severity-high { background: #a94708; }
+.severity-badge.severity-medium { background: #25639a; }
+.severity-badge.severity-low { background: #2f6f4f; }
+
+.severity-badge.severity-critical,
+.severity-badge.severity-high,
+.severity-badge.severity-medium,
+.severity-badge.severity-low {
+  color: #fff;
+}
 
 .status-badge {
   background: #eef3ef;

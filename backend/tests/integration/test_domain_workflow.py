@@ -159,6 +159,34 @@ async def test_final_incident_track_is_recalculated_from_submitted_categories(
 
 
 @pytest.mark.asyncio
+async def test_other_civic_incident_is_recalculated_and_routed_to_local_government(
+    database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
+) -> None:
+    _, factory = database
+    async with factory() as session:
+        citizen_id = await session.scalar(
+            select(User.id).where(User.email == "citizen@example.com")
+        )
+    assert citizen_id is not None
+
+    async with factory() as session:
+        created = await IncidentService(session, RecordingPublisher()).create_report(
+            reporter_user_id=citizen_id,
+            description="공원 벤치가 부서져 튀어나온 부분 때문에 위험합니다.",
+            address="서울시 중구",
+            latitude=37.5,
+            longitude=127.0,
+            categories=[Category.OTHER_CIVIC],
+            severity=Severity.LOW,
+            image_object_key=None,
+        )
+
+    assert created.incident.categories == [Category.OTHER_CIVIC]
+    assert created.incident.track is ReportTrack.CIVIC
+    assert [item.agency_type for item in created.agencies] == [AgencyType.LOCAL_GOV]
+
+
+@pytest.mark.asyncio
 async def test_full_workflow_resolves_after_every_agency_completes(
     database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
 ) -> None:
